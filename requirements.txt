@@ -1,0 +1,6 @@
+pip-chill==1.0.1
+python-dotenv==1.0.0
+sqlalchemy==2.0.4
+streamlit==1.19.0
+watchdog==2.3.0
+web3==5.31.3

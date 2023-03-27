@@ -12,21 +12,6 @@ from leafmap.common import hex_to_rgb
 
 st.set_page_config(layout="wide")
 
-st.sidebar.info(
-    """
-    - Web App URL: <https://streamlit.geemap.org>
-    - GitHub repository: <https://github.com/giswqs/streamlit-geospatial>
-    """
-)
-
-st.sidebar.title("Contact")
-st.sidebar.info(
-    """
-    Qiusheng Wu: <https://wetlands.io>
-    [GitHub](https://github.com/giswqs) | [Twitter](https://twitter.com/giswqs) | [YouTube](https://www.youtube.com/c/QiushengWu) | [LinkedIn](https://www.linkedin.com/in/qiushengwu)
-    """
-)
-
 STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
 # We create a downloads directory within the streamlit static asset directory
 # and we write output files to it
@@ -36,53 +21,36 @@ if not DOWNLOADS_PATH.is_dir():
 
 # Data source: https://www.realtor.com/research/data/
 # link_prefix = "https://econdata.s3-us-west-2.amazonaws.com/Reports/"
-link_prefix = "https://raw.githubusercontent.com/giswqs/data/main/housing/"
+# link_prefix = "https://raw.githubusercontent.com/giswqs/data/main/housing/"
+link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_streamlit_eda/main/src/data/umr/"
 
 data_links = {
-    "weekly": {
-        "national": link_prefix + "Core/listing_weekly_core_aggregate_by_country.csv",
-        "metro": link_prefix + "Core/listing_weekly_core_aggregate_by_metro.csv",
+    "net_migration": {
+        "world": link_prefix + "umr_data_DM_NET_MG_RATE_1950-2022.csv",
+        # "national": link_prefix + "Core/listing_weekly_core_aggregate_by_metro.csv",
     },
-    "monthly_current": {
-        "national": link_prefix + "Core/RDC_Inventory_Core_Metrics_Country.csv",
-        "state": link_prefix + "Core/RDC_Inventory_Core_Metrics_State.csv",
-        "metro": link_prefix + "Core/RDC_Inventory_Core_Metrics_Metro.csv",
-        "county": link_prefix + "Core/RDC_Inventory_Core_Metrics_County.csv",
-        "zip": link_prefix + "Core/RDC_Inventory_Core_Metrics_Zip.csv",
-    },
-    "monthly_historical": {
-        "national": link_prefix + "Core/RDC_Inventory_Core_Metrics_Country_History.csv",
-        "state": link_prefix + "Core/RDC_Inventory_Core_Metrics_State_History.csv",
-        "metro": link_prefix + "Core/RDC_Inventory_Core_Metrics_Metro_History.csv",
-        "county": link_prefix + "Core/RDC_Inventory_Core_Metrics_County_History.csv",
-        "zip": link_prefix + "Core/RDC_Inventory_Core_Metrics_Zip_History.csv",
-    },
-    "hotness": {
-        "metro": link_prefix
-        + "Hotness/RDC_Inventory_Hotness_Metrics_Metro_History.csv",
-        "county": link_prefix
-        + "Hotness/RDC_Inventory_Hotness_Metrics_County_History.csv",
-        "zip": link_prefix + "Hotness/RDC_Inventory_Hotness_Metrics_Zip_History.csv",
+    "risk_factors": {
+        "DM_": link_prefix + "umr_data_DM_.csv",
+        "ECON_": link_prefix + "umr_data_ECON_.csv",
+        "HVA_": link_prefix + "umr_data_HVA_.csv",
+        "MG_": link_prefix + "umr_data_MG_.csv",
+        "MNCH_": link_prefix + "umr_data_MNCH_.csv",
+        "PT_": link_prefix + "umr_data_PT_.csv",
+        "PV_": link_prefix + "umr_data_PV_.csv",
+        "WS_": link_prefix + "umr_data_WS_.csv",
     },
 }
 
 
-def get_data_columns(df, category, frequency="monthly"):
-    if frequency == "monthly":
-        if category.lower() == "county":
+def get_data_columns(df, category, frequency="annual"):
+    if frequency == "annual":
+        if category.lower() == "world":
             del_cols = ["month_date_yyyymm", "county_fips", "county_name"]
-        elif category.lower() == "state":
-            del_cols = ["month_date_yyyymm", "state", "state_id"]
-        elif category.lower() == "national":
-            del_cols = ["month_date_yyyymm", "country"]
-        elif category.lower() == "metro":
-            del_cols = ["month_date_yyyymm", "cbsa_code", "cbsa_title", "HouseholdRank"]
-        elif category.lower() == "zip":
-            del_cols = ["month_date_yyyymm", "postal_code", "zip_name", "flag"]
-    elif frequency == "weekly":
-        if category.lower() == "national":
+
+    elif frequency == "monthly":
+        if category.lower() == "us":
             del_cols = ["week_end_date", "geo_country"]
-        elif category.lower() == "metro":
+        elif category.lower() == "counties":
             del_cols = ["week_end_date", "cbsa_code", "cbsa_title", "hh_rank"]
 
     cols = df.columns.values.tolist()
@@ -90,68 +58,72 @@ def get_data_columns(df, category, frequency="monthly"):
     for col in cols:
         if col.strip() in del_cols:
             cols.remove(col)
-    if category.lower() == "metro":
-        return cols[2:]
-    else:
-        return cols[1:]
+    
+    # if category.lower() == "metro":
+    #     return cols[2:]
+    # else:
+    #     return cols[1:]
 
 
 @st.cache_data
 def get_inventory_data(url):
     df = pd.read_csv(url)
-    url = url.lower()
-    if "county" in url:
-        df["county_fips"] = df["county_fips"].map(str)
-        df["county_fips"] = df["county_fips"].str.zfill(5)
-    elif "state" in url:
-        df["STUSPS"] = df["state_id"].str.upper()
-    elif "metro" in url:
-        df["cbsa_code"] = df["cbsa_code"].map(str)
-    elif "zip" in url:
-        df["postal_code"] = df["postal_code"].map(str)
-        df["postal_code"] = df["postal_code"].str.zfill(5)
+    # url = url.lower()
+    # if "county" in url:
+    #     df["county_fips"] = df["county_fips"].map(str)
+    #     df["county_fips"] = df["county_fips"].str.zfill(5)
+    # elif "state" in url:
+    #     df["STUSPS"] = df["state_id"].str.upper()
+    # elif "metro" in url:
+    #     df["cbsa_code"] = df["cbsa_code"].map(str)
+    # elif "zip" in url:
+    #     df["postal_code"] = df["postal_code"].map(str)
+    #     df["postal_code"] = df["postal_code"].str.zfill(5)
 
-    if "listing_weekly_core_aggregate_by_country" in url:
-        columns = get_data_columns(df, "national", "weekly")
-        for column in columns:
-            if column != "median_days_on_market_by_day_yy":
-                df[column] = df[column].str.rstrip("%").astype(float) / 100
-    if "listing_weekly_core_aggregate_by_metro" in url:
-        columns = get_data_columns(df, "metro", "weekly")
-        for column in columns:
-            if column != "median_days_on_market_by_day_yy":
-                df[column] = df[column].str.rstrip("%").astype(float) / 100
-        df["cbsa_code"] = df["cbsa_code"].str[:5]
+    # if "listing_weekly_core_aggregate_by_country" in url:
+    #     columns = get_data_columns(df, "national", "weekly")
+    #     for column in columns:
+    #         if column != "median_days_on_market_by_day_yy":
+    #             df[column] = df[column].str.rstrip("%").astype(float) / 100
+    # if "listing_weekly_core_aggregate_by_metro" in url:
+    #     columns = get_data_columns(df, "metro", "weekly")
+    #     for column in columns:
+    #         if column != "median_days_on_market_by_day_yy":
+    #             df[column] = df[column].str.rstrip("%").astype(float) / 100
+    #     df["cbsa_code"] = df["cbsa_code"].str[:5]
     return df
 
 
-def filter_weekly_inventory(df, week):
-    df = df[df["week_end_date"] == week]
-    return df
+# def filter_weekly_inventory(df, week):
+#     df = df[df["week_end_date"] == week]
+#     return df
 
 
-def get_start_end_year(df):
-    start_year = int(str(df["month_date_yyyymm"].min())[:4])
-    end_year = int(str(df["month_date_yyyymm"].max())[:4])
-    return start_year, end_year
+# def get_start_end_year(df):
+#     start_year = int(str(df["month_date_yyyymm"].min())[:4])
+#     end_year = int(str(df["month_date_yyyymm"].max())[:4])
+#     return start_year, end_year
 
 
-def get_periods(df):
-    return [str(d) for d in list(set(df["month_date_yyyymm"].tolist()))]
+# def get_periods(df):
+#     return [str(d) for d in list(set(df["month_date_yyyymm"].tolist()))]
 
 
 @st.cache_data
 def get_geom_data(category):
 
     prefix = (
-        "https://raw.githubusercontent.com/giswqs/streamlit-geospatial/master/data/"
+        # "https://raw.githubusercontent.com/giswqs/streamlit-geospatial/master/data/"
+        "https://raw.githubusercontent.com/giswqs/data/main/"
     )
+
     links = {
-        "national": prefix + "us_nation.geojson",
-        "state": prefix + "us_states.geojson",
-        "county": prefix + "us_counties.geojson",
-        "metro": prefix + "us_metro_areas.geojson",
-        "zip": "https://www2.census.gov/geo/tiger/GENZ2018/shp/cb_2018_us_zcta510_500k.zip",
+        "world": prefix + "world/countries.json",
+        "us": prefix + "us/us_nation.geojson",
+        "state": prefix + "us/us_states.geojson",
+        "county": prefix + "us/us_counties.geojson",
+        "metro": prefix + "us/us_metro_areas.geojson",
+        # "zip": "https://www2.census.gov/geo/tiger/GENZ2018/shp/cb_2018_us_zcta510_500k.zip",
     }
 
     if category.lower() == "zip":
@@ -174,11 +146,13 @@ def join_attributes(gdf, df, category):
         new_gdf = gdf.merge(df, left_on="GEOID", right_on="county_fips", how="outer")
     elif category == "state":
         new_gdf = gdf.merge(df, left_on="STUSPS", right_on="STUSPS", how="outer")
-    elif category == "national":
+    elif category == "us":
         if "geo_country" in df.columns.values.tolist():
             df["country"] = None
             df.loc[0, "country"] = "United States"
         new_gdf = gdf.merge(df, left_on="NAME", right_on="country", how="outer")
+    elif category == "world":
+        new_gdf = gdf.merge(df, left_on="id", right_on="REF_AREA", how="outer")
     elif category == "metro":
         new_gdf = gdf.merge(df, left_on="CBSAFP", right_on="cbsa_code", how="outer")
     elif category == "zip":
@@ -222,7 +196,7 @@ def get_saturday(in_date):
 
 def app():
 
-    st.title("U.S. Real Estate Data and Market Trends")
+    st.title("TESTING")
     st.markdown(
         """**Introduction:** This interactive dashboard is designed for visualizing U.S. real estate data and market trends at multiple levels (i.e., national,
          state, county, and metro). The data sources include [Real Estate Data](https://www.realtor.com/research/data) from realtor.com and 
@@ -232,84 +206,87 @@ def app():
     """
     )
 
-    with st.expander("See a demo"):
-        st.image("https://i.imgur.com/Z3dk6Tr.gif")
-
     row1_col1, row1_col2, row1_col3, row1_col4, row1_col5 = st.columns(
         [0.6, 0.8, 0.6, 1.4, 2]
     )
     with row1_col1:
-        frequency = st.selectbox("Monthly/weekly data", ["Monthly", "Weekly"])
-    with row1_col2:
-        types = ["Current month data", "Historical data"]
-        if frequency == "Weekly":
-            types.remove("Current month data")
-        cur_hist = st.selectbox(
-            "Current/historical data",
-            types,
-        )
-    with row1_col3:
-        if frequency == "Monthly":
-            scale = st.selectbox(
-                "Scale", ["National", "State", "Metro", "County"], index=3
-            )
-        else:
-            scale = st.selectbox("Scale", ["National", "Metro"], index=1)
+        frequency = st.selectbox("Risk Factors", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
+
+    # with row1_col2:
+    #     types = ["Current month data", "Historical data"]
+    #     if frequency == "Weekly":
+    #         types.remove("Current month data")
+    #     cur_hist = st.selectbox(
+    #         "Current/historical data",
+    #         types,
+    #     )
+    # with row1_col3:
+    #     if frequency == "Monthly":
+    #         scale = st.selectbox(
+    #             "Scale", ["National", "State", "Metro", "County"], index=3
+    #         )
+    #     else:
+    #         scale = st.selectbox("Scale", ["National", "Metro"], index=1)
+
+    scale = "world"
 
     gdf = get_geom_data(scale.lower())
 
-    if frequency == "Weekly":
-        inventory_df = get_inventory_data(data_links["weekly"][scale.lower()])
-        weeks = get_weeks(inventory_df)
-        with row1_col1:
-            selected_date = st.date_input("Select a date", value=weeks[-1])
-            saturday = get_saturday(selected_date)
-            selected_period = saturday.strftime("%-m/%-d/%Y")
-            if saturday not in weeks:
-                st.error(
-                    "The selected date is not available in the data. Please select a date between {} and {}".format(
-                        weeks[0], weeks[-1]
-                    )
-                )
-                selected_period = weeks[-1].strftime("%-m/%-d/%Y")
-        inventory_df = get_inventory_data(data_links["weekly"][scale.lower()])
-        inventory_df = filter_weekly_inventory(inventory_df, selected_period)
+    inventory_df = get_inventory_data(data_links["net_migration"][scale.lower()])
 
-    if frequency == "Monthly":
-        if cur_hist == "Current month data":
-            inventory_df = get_inventory_data(
-                data_links["monthly_current"][scale.lower()]
-            )
-            selected_period = get_periods(inventory_df)[0]
-        else:
-            with row1_col2:
-                inventory_df = get_inventory_data(
-                    data_links["monthly_historical"][scale.lower()]
-                )
-                start_year, end_year = get_start_end_year(inventory_df)
-                periods = get_periods(inventory_df)
-                with st.expander("Select year and month", True):
-                    selected_year = st.slider(
-                        "Year",
-                        start_year,
-                        end_year,
-                        value=start_year,
-                        step=1,
-                    )
-                    selected_month = st.slider(
-                        "Month",
-                        min_value=1,
-                        max_value=12,
-                        value=int(periods[0][-2:]),
-                        step=1,
-                    )
-                selected_period = str(selected_year) + str(selected_month).zfill(2)
-                if selected_period not in periods:
-                    st.error("Data not available for selected year and month")
-                    selected_period = periods[0]
-                inventory_df = inventory_df[
-                    inventory_df["month_date_yyyymm"] == int(selected_period)
-                ]
+
+    # if frequency == "Weekly":
+    #     inventory_df = get_inventory_data(data_links["weekly"][scale.lower()])
+    #     weeks = get_weeks(inventory_df)
+    #     with row1_col1:
+    #         selected_date = st.date_input("Select a date", value=weeks[-1])
+    #         saturday = get_saturday(selected_date)
+    #         selected_period = saturday.strftime("%-m/%-d/%Y")
+    #         if saturday not in weeks:
+    #             st.error(
+    #                 "The selected date is not available in the data. Please select a date between {} and {}".format(
+    #                     weeks[0], weeks[-1]
+    #                 )
+    #             )
+    #             selected_period = weeks[-1].strftime("%-m/%-d/%Y")
+    #     inventory_df = get_inventory_data(data_links["weekly"][scale.lower()])
+    #     inventory_df = filter_weekly_inventory(inventory_df, selected_period)
+
+    # if frequency == "Monthly":
+    #     if cur_hist == "Current month data":
+    #         inventory_df = get_inventory_data(
+    #             data_links["monthly_current"][scale.lower()]
+    #         )
+    #         selected_period = get_periods(inventory_df)[0]
+    #     else:
+    #         with row1_col2:
+    #             inventory_df = get_inventory_data(
+    #                 data_links["monthly_historical"][scale.lower()]
+    #             )
+    #             start_year, end_year = get_start_end_year(inventory_df)
+    #             periods = get_periods(inventory_df)
+    #             with st.expander("Select year and month", True):
+    #                 selected_year = st.slider(
+    #                     "Year",
+    #                     start_year,
+    #                     end_year,
+    #                     value=start_year,
+    #                     step=1,
+    #                 )
+    #                 selected_month = st.slider(
+    #                     "Month",
+    #                     min_value=1,
+    #                     max_value=12,
+    #                     value=int(periods[0][-2:]),
+    #                     step=1,
+    #                 )
+    #             selected_period = str(selected_year) + str(selected_month).zfill(2)
+    #             if selected_period not in periods:
+    #                 st.error("Data not available for selected year and month")
+    #                 selected_period = periods[0]
+    #             inventory_df = inventory_df[
+    #                 inventory_df["month_date_yyyymm"] == int(selected_period)
+    #             ]
 
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
 
@@ -458,26 +435,26 @@ def app():
                 font_size=10,
             )
         )
-    row4_col1, row4_col2, row4_col3 = st.columns([1, 2, 3])
-    with row4_col1:
-        show_data = st.checkbox("Show raw data")
-    with row4_col2:
-        show_cols = st.multiselect("Select columns", data_cols)
-    with row4_col3:
-        show_colormaps = st.checkbox("Preview all color palettes")
-        if show_colormaps:
-            st.write(cm.plot_colormaps(return_fig=True))
-    if show_data:
-        if scale == "National":
-            st.dataframe(gdf[["NAME", "GEOID"] + show_cols])
-        elif scale == "State":
-            st.dataframe(gdf[["NAME", "STUSPS"] + show_cols])
-        elif scale == "County":
-            st.dataframe(gdf[["NAME", "STATEFP", "COUNTYFP"] + show_cols])
-        elif scale == "Metro":
-            st.dataframe(gdf[["NAME", "CBSAFP"] + show_cols])
-        elif scale == "Zip":
-            st.dataframe(gdf[["GEOID10"] + show_cols])
+    # row4_col1, row4_col2, row4_col3 = st.columns([1, 2, 3])
+    # with row4_col1:
+    #     show_data = st.checkbox("Show raw data")
+    # with row4_col2:
+    #     show_cols = st.multiselect("Select columns", data_cols)
+    # with row4_col3:
+    #     show_colormaps = st.checkbox("Preview all color palettes")
+    #     if show_colormaps:
+    #         st.write(cm.plot_colormaps(return_fig=True))
+    # if show_data:
+    #     if scale == "National":
+    #         st.dataframe(gdf[["NAME", "GEOID"] + show_cols])
+    #     elif scale == "State":
+    #         st.dataframe(gdf[["NAME", "STUSPS"] + show_cols])
+    #     elif scale == "County":
+    #         st.dataframe(gdf[["NAME", "STATEFP", "COUNTYFP"] + show_cols])
+    #     elif scale == "Metro":
+    #         st.dataframe(gdf[["NAME", "CBSAFP"] + show_cols])
+    #     elif scale == "Zip":
+    #         st.dataframe(gdf[["GEOID10"] + show_cols])
 
 
 app()
