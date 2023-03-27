@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, text as sql_text
 import streamlit as st
 
 # Establish and define database connection
-connection_string = 'sqlite:///./src/data/data.db'
+connection_string = 'sqlite:///./src/data/db.sqlite3'
 engine = create_engine(connection_string)
 
 # Initialization data for demo and reproducable output
