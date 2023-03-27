@@ -29,7 +29,7 @@ link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_streamlit
 
 data_links = {
     "net_migration": {
-        "world": link_prefix + "umr_data_NMR.csv?token=GHSAT0AAAAAAB6FHUWONTUE4DFGGS66GEYSZBA6MWQ",
+        "world": link_prefix + "umr_eda_NMR.csv?token=GHSAT0AAAAAAB6FHUWPJTV6KWP2FF2JO2TIZBA7MDQ",
         # "national": link_prefix + "Core/listing_weekly_core_aggregate_by_metro.csv",
     },
     "risk_factors": {
@@ -94,6 +94,9 @@ def get_inventory_data(url):
     #         if column != "median_days_on_market_by_day_yy":
     #             df[column] = df[column].str.rstrip("%").astype(float) / 100
     #     df["cbsa_code"] = df["cbsa_code"].str[:5]
+
+    df = df[df.TIME_PERIOD==2022]
+
     return df
 
 
@@ -211,9 +214,12 @@ def app():
     )
     with row1_col1:
         frequency = "annual"
+
         risk_factor = st.selectbox("Risk Factors", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
 
-    # with row1_col2:
+    with row1_col2:
+        selected_year = "2021" #st.selectbox("Year", ["2000", "2001", "2022"])
+
     #     types = ["Current month data", "Historical data"]
     #     if frequency == "Weekly":
     #         types.remove("Current month data")
@@ -311,7 +317,7 @@ def app():
 
     palettes = cm.list_colormaps()
     with row2_col1:
-        palette = st.selectbox("Color palette", palettes, index=palettes.index("Blues"))
+        palette = st.selectbox("Color palette", palettes, index=palettes.index("RdYlGn"))
     with row2_col2:
         n_colors = st.slider("Number of colors", min_value=2, max_value=20, value=8)
     with row2_col3:
@@ -321,7 +327,7 @@ def app():
     with row2_col5:
         if show_3d:
             elev_scale = st.slider(
-                "Elevation scale", min_value=1, max_value=1000000, value=1, step=10
+                "Elevation scale", min_value=1, max_value=10000, value=1, step=10
             )
             with row2_col6:
                 st.info("Press Ctrl and move the left mouse button.")
@@ -331,6 +337,7 @@ def app():
     gdf = join_attributes(gdf, inventory_df, scale.lower())
     gdf_null = select_null(gdf, selected_col)
     gdf = select_non_null(gdf, selected_col)
+    # gdf = gdf[gdf.TIME_PERIOD==selected_year]
     gdf = gdf.sort_values(by=selected_col, ascending=True)
 
     colors = cm.get_palette(palette, n_colors)
@@ -346,8 +353,8 @@ def app():
 
     initial_view_state = pdk.ViewState(
         latitude=40,
-        longitude=-100,
-        zoom=3,
+        longitude=-0,
+        zoom=2,
         max_zoom=16,
         pitch=0,
         bearing=0,
@@ -400,11 +407,11 @@ def app():
 
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
     tooltip = {
-        "html": "<b>Name:</b> {NAME}<br><b>Value:</b> {"
+        "html": "<b>Name:</b> {REF_AREA}<br><b>Value:</b> {"
         + selected_col
-        + "}<br><b>Date:</b> "
+        + "}<br><b>Year:</b> "
         # + selected_period
-        + "",
+        + "2022",
         "style": {"backgroundColor": "steelblue", "color": "white"},
     }
 
