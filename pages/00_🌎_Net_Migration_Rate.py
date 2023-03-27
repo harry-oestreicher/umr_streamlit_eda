@@ -134,11 +134,12 @@ def select_null(gdf, col_name):
 
 
 def get_indicator_dict(name):
-    in_csv = os.path.join(os.getcwd(), "data/umr/umr_data_dict_INDICATOR.csv")
+    in_csv = os.path.join(os.getcwd(), "src/data/umr/umr_data_dict_INDICATOR.csv")
     df = pd.read_csv(in_csv)
-    label = list(df[df["key"] == name]["Label"])[0]
-    desc = list(df[df["value"] == name]["Description"])[0]
-    return label, desc
+    value = df[df.key==name]["value"].values[0]
+
+    return value
+
 
 def get_indicators(df):
     indicator_list = df["INDICATOR"].unique()
@@ -154,7 +155,7 @@ def app():
     )
 
     row1_col1, row1_col2, row1_col3, row1_col4, row1_col5 = st.columns(
-        [0.6, 0.8, 0.6, 1.4, 2]
+        [0.5, 0.5, 1.2, 0.8, 1]
     )
 
     years_list = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
@@ -170,33 +171,43 @@ def app():
     scale = "countries"
     gdf = get_geom_data(scale.lower())
 
-
     # Get Net Migration Data
     inventory_df = get_reference_data(data_links["reference"][scale.lower()])
 
     # Filter by selected year
     inventory_df = inventory_df[inventory_df.TIME_PERIOD==selected_year]
+
     # Calculate columns
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
 
+    indicator_df = get_indicator_data(data_links["indicator"][indicator])
+    indicator_df = indicator_df[indicator_df.TIME_PERIOD==selected_year]
 
-
-    with row1_col4:
+    with row1_col3:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
+        st.write(indicator_df.head(3))
+        # ind_list = indicator_df["INDICATOR"].unique()
+        # st.write(indicator_df)
+
 
     with row1_col5:
-        st.write(".")
-        # show_desc = "no"
-        # show_desc = st.checkbox("Show attribute description")
-        # if show_desc:
-        #     try:
-        #         label, desc = get_indicator_dict(indicator.strip())
-        #         markdown = f"""
-        #         **{label}**: {desc}
-        #         """
-        #         st.markdown(markdown)
-        #     except:
-        #         st.warning("No description available for selected attribute")
+        # get_indicator_dict(name)
+        show_desc = "no"
+        show_desc = st.checkbox("Show indicator description")
+        if show_desc:
+            try:
+                # label, desc = get_indicator_dict(indicator.strip())
+                # markdown = f"""
+                # **{label}**: {desc}
+                # """
+                # st.markdown(markdown)
+
+                for i in indicator_df["INDICATOR"].unique():
+                    st.write(f"{get_indicator_dict(i)}")
+                    pass
+
+            except:
+                st.warning("No description available for selected attribute")
 
     row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
         [0.6, 0.68, 0.7, 0.7, 1.5, 0.8]
@@ -224,15 +235,6 @@ def app():
 
     # First JOIN
     gdf = join_attributes(gdf, inventory_df, scale.lower())
-
-    # Join Additional indicators
-    indicator_df = get_indicator_data(data_links["indicator"][indicator])
-    # gdf = join_indicators(gdf, indicator_df, indicator)
-
-    st.write(gdf.head(3))
-
-
-
 
 
     gdf_null = select_null(gdf, selected_col)
