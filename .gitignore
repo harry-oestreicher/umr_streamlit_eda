@@ -6,7 +6,7 @@ __pycache__/
 # STW Token
 .env
 .DS_Store
-
+tmp/
 
 # C extensions
 *.so
