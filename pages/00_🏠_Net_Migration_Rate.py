@@ -24,9 +24,12 @@ if not DOWNLOADS_PATH.is_dir():
 # link_prefix = "https://raw.githubusercontent.com/giswqs/data/main/housing/"
 link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_streamlit_eda/main/src/data/umr/"
 
+
+# https://raw.githubusercontent.com/harry-oestreicher/umr_streamlit_eda/main/src/data/umr/umr_data_DM_NET_MG_RATE_1950-2022.csv?token=GHSAT0AAAAAAB6FHUWONTUE4DFGGS66GEYSZBA6MWQ
+
 data_links = {
     "net_migration": {
-        "world": link_prefix + "umr_data_DM_NET_MG_RATE_1950-2022.csv",
+        "world": link_prefix + "umr_data_NMR.csv?token=GHSAT0AAAAAAB6FHUWONTUE4DFGGS66GEYSZBA6MWQ",
         # "national": link_prefix + "Core/listing_weekly_core_aggregate_by_metro.csv",
     },
     "risk_factors": {
@@ -43,26 +46,26 @@ data_links = {
 
 
 def get_data_columns(df, category, frequency="annual"):
-    if frequency == "annual":
-        if category.lower() == "world":
-            del_cols = ["month_date_yyyymm", "county_fips", "county_name"]
+    # if frequency == "annual":
+    #     if category.lower() == "world":
+    #         del_cols = ["month_date_yyyymm", "county_fips", "county_name"]
 
-    elif frequency == "monthly":
-        if category.lower() == "us":
-            del_cols = ["week_end_date", "geo_country"]
-        elif category.lower() == "counties":
-            del_cols = ["week_end_date", "cbsa_code", "cbsa_title", "hh_rank"]
+    # elif frequency == "monthly":
+    #     if category.lower() == "us":
+    #         del_cols = ["week_end_date", "geo_country"]
+    #     elif category.lower() == "counties":
+    #         del_cols = ["week_end_date", "cbsa_code", "cbsa_title", "hh_rank"]
 
     cols = df.columns.values.tolist()
 
-    for col in cols:
-        if col.strip() in del_cols:
-            cols.remove(col)
+    # for col in cols:
+    #     if col.strip() in del_cols:
+    #         cols.remove(col)
     
     # if category.lower() == "metro":
     #     return cols[2:]
     # else:
-    #     return cols[1:]
+    return cols[1:]
 
 
 @st.cache_data
@@ -198,10 +201,7 @@ def app():
 
     st.title("TESTING")
     st.markdown(
-        """**Introduction:** This interactive dashboard is designed for visualizing U.S. real estate data and market trends at multiple levels (i.e., national,
-         state, county, and metro). The data sources include [Real Estate Data](https://www.realtor.com/research/data) from realtor.com and 
-         [Cartographic Boundary Files](https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html) from U.S. Census Bureau.
-         Several open-source packages are used to process the data and generate the visualizations, e.g., [streamlit](https://streamlit.io),
+        """Several open-source packages are used to process the data and generate the visualizations, e.g., [streamlit](https://streamlit.io),
           [geopandas](https://geopandas.org), [leafmap](https://leafmap.org), and [pydeck](https://deckgl.readthedocs.io).
     """
     )
@@ -210,7 +210,8 @@ def app():
         [0.6, 0.8, 0.6, 1.4, 2]
     )
     with row1_col1:
-        frequency = st.selectbox("Risk Factors", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
+        frequency = "annual"
+        risk_factor = st.selectbox("Risk Factors", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
 
     # with row1_col2:
     #     types = ["Current month data", "Historical data"]
@@ -291,7 +292,7 @@ def app():
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
 
     with row1_col4:
-        selected_col = st.selectbox("Attribute", data_cols)
+        selected_col = "OBS_VALUE" #   st.selectbox("Attribute", data_cols)
     with row1_col5:
         show_desc = st.checkbox("Show attribute description")
         if show_desc:
@@ -402,7 +403,7 @@ def app():
         "html": "<b>Name:</b> {NAME}<br><b>Value:</b> {"
         + selected_col
         + "}<br><b>Date:</b> "
-        + selected_period
+        # + selected_period
         + "",
         "style": {"backgroundColor": "steelblue", "color": "white"},
     }
