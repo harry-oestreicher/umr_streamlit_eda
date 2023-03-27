@@ -36,7 +36,7 @@ st.sidebar.markdown('This is an example Streamlit app to show how to expand and 
 def main(df):
 
     dir_root = os.path.dirname(os.path.abspath(__file__))
-    utl.set_page_title('UMR Blockchain')
+    utl.set_page_title('UMR Exploratory Data Analysis')
     st.set_option('deprecation.showPyplotGlobalUse', False)
     utl.local_css("frontend/css/streamlit.css")
     utl.remote_css("https://fonts.googleapis.com/icon?family=Material+Icons")
@@ -44,15 +44,13 @@ def main(df):
 
     # Page Header information
     st.title("Unaccompanied Minor Research", anchor=None)
-    st.write("### Blockchain Use Case")
-    st.write("""This MVP demonstrates the ability to safetly track tokenized assets and resources on a blockchain. 
-    Portability allows users developers to deploy and interact with the ERC721 Smart Contract locally,
-    then switch to almost any ethereum blockchain.""")
-    st.markdown("**Settings:**")
-    st.write(f"Contract Address: {contract_address}")
-    st.write(f"Contract ABI: {contract_abi}")
-    st.markdown("---")
-    st.image("https://www.bbva.com/wp-content/uploads/en/2017/07/blockchain-humanitario.jpg", width=600)
+    st.write("### Exploratory Data Analysis")
+    st.write("""This MVP explores the risk factors related to underage migrant youths.""")
+    # st.markdown("**Settings:**")
+    # st.write(f"Contract Address: {contract_address}")
+    # st.write(f"Contract ABI: {contract_abi}")
+    # st.markdown("---")
+    # st.image("https://www.bbva.com/wp-content/uploads/en/2017/07/blockchain-humanitario.jpg", width=600)
     return
 
     # ## Sidebar voodoo
