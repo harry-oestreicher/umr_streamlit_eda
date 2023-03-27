@@ -28,7 +28,7 @@ recipient_df = get_data("SELECT Organization, City, Address from ORGANIZATIONS")
 categories_df = get_data("SELECT DISTINCT Category from ASSETS")
 assets_df = get_data("SELECT Category, Item, QtySize, TKN, Tags from ASSETS")
 
-# Begin Streamlit calls
+# Begin Streamlit calls 
 # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
 if 'sidebar_state' not in st.session_state:
     st.session_state.sidebar_state = 'collapsed'
@@ -97,7 +97,7 @@ def main(df):
         city = st.text_input("City", recipient_city, type="default", help=None, disabled=True)
 
         # READ ALL THE BYTES of new image file template to upload to ipfs!
-        image_file = open(Path(f"src/images/tokens/{category}.png"),"rb")
+        image_file = open(Path(f"src/images/tokens/{category.lower()}.png"),"rb")
 
         if st.button("Tokenate"):
             # Timestamp when button is clicked (can't hurt right?)

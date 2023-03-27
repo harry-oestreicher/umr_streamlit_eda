@@ -12,20 +12,20 @@ from leafmap.common import hex_to_rgb
 
 st.set_page_config(layout="wide")
 
-STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
-# We create a downloads directory within the streamlit static asset directory
-# and we write output files to it
-DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
-if not DOWNLOADS_PATH.is_dir():
-    DOWNLOADS_PATH.mkdir()
+# STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
+# # We create a downloads directory within the streamlit static asset directory
+# # and we write output files to it
+# DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
+# if not DOWNLOADS_PATH.is_dir():
+#     DOWNLOADS_PATH.mkdir()
 
 link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
 
 data_links = {
-    "net_migration": {
-        "countries": link_prefix + "umr_eda_NMR.csv",
+    "reference": {
+        "countries": link_prefix + "umr_eda_NMR.csv", # <== Net Migration
     },
-    "risk_factors": {
+    "indicator": {
         "DM_": link_prefix + "umr_data_DM_.csv",
         "ECON_": link_prefix + "umr_data_ECON_.csv",
         "HVA_": link_prefix + "umr_data_HVA_.csv",
@@ -37,70 +37,30 @@ data_links = {
     },
 }
 
-
 def get_data_columns(df, category="world", frequency="annual"):
-
     cols = df.columns.values.tolist()
-
     return cols[1:]
 
-
 @st.cache_data
-def get_inventory_data(url):
+def get_reference_data(url):
     df = pd.read_csv(url)
-    url = url.lower()
-
-    # if "umr_eda_NMR" in url:
-    #     df["county_fips"] = df["county_fips"].map(str)
-    #     df["county_fips"] = df["county_fips"].str.zfill(5)
-
-    # elif "state" in url:
-    #     df["STUSPS"] = df["state_id"].str.upper()
-    # elif "metro" in url:
-    #     df["cbsa_code"] = df["cbsa_code"].map(str)
-    # elif "zip" in url:
-    #     df["postal_code"] = df["postal_code"].map(str)
-    #     df["postal_code"] = df["postal_code"].str.zfill(5)
-
-    # if "listing_weekly_core_aggregate_by_country" in url:
-    #     columns = get_data_columns(df, "national", "weekly")
-    #     for column in columns:
-    #         if column != "median_days_on_market_by_day_yy":
-    #             df[column] = df[column].str.rstrip("%").astype(float) / 100
-    # if "listing_weekly_core_aggregate_by_metro" in url:
-    #     columns = get_data_columns(df, "metro", "weekly")
-    #     for column in columns:
-    #         if column != "median_days_on_market_by_day_yy":
-    #             df[column] = df[column].str.rstrip("%").astype(float) / 100
-    #     df["cbsa_code"] = df["cbsa_code"].str[:5]
-
-    # df = df[df.TIME_PERIOD==2022]
-
+    df.drop(columns=["Unnamed: 0", "AGE"], inplace=True)
+    # url = url.lower()
     return df
 
-
-# def filter_weekly_inventory(df, week):
-#     df = df[df["week_end_date"] == week]
-#     return df
-
-
-# def get_start_end_year(df):
-#     start_year = int(str(df["month_date_yyyymm"].min())[:4])
-#     end_year = int(str(df["month_date_yyyymm"].max())[:4])
-#     return start_year, end_year
-
-
-# def get_periods(df):
-#     return [str(d) for d in list(set(df["month_date_yyyymm"].tolist()))]
+@st.cache_data
+def get_indicator_data(url):
+    df = pd.read_csv(url)
+    df.drop(columns=["Unnamed: 0"], inplace=True)
+    # url = url.lower()
+    return df
 
 
 @st.cache_data
 def get_geom_data(category):
-
     prefix = (
         "https://raw.githubusercontent.com/harry-oestreicher/gis-data/main/"
     )
-
     links = {
         "continents": prefix + "world/continents.geojson",
         "countries": prefix + "world/countries.json",
@@ -112,17 +72,7 @@ def get_geom_data(category):
         "county": prefix + "us/us_counties.geojson",
         "metro": prefix + "us/us_metro_areas.geojson",
     }
-
-    if category.lower() == "zip":
-        r = requests.get(links[category])
-        out_zip = os.path.join(DOWNLOADS_PATH, "cb_2018_us_zcta510_500k.zip")
-        with open(out_zip, "wb") as code:
-            code.write(r.content)
-        zip_ref = zipfile.ZipFile(out_zip, "r")
-        zip_ref.extractall(DOWNLOADS_PATH)
-        gdf = gpd.read_file(out_zip.replace("zip", "shp"))
-    else:
-        gdf = gpd.read_file(links[category])
+    gdf = gpd.read_file(links[category])
 
     return gdf
 
@@ -143,11 +93,34 @@ def join_attributes(gdf, df, category):
         new_gdf = gdf.merge(df, left_on="id", right_on="REF_AREA", how="outer")
     elif category == "countries_hires":
         new_gdf = gdf.merge(df, left_on="ISO_A3", right_on="REF_AREA", how="outer")
-    elif category == "metro":
-        new_gdf = gdf.merge(df, left_on="CBSAFP", right_on="cbsa_code", how="outer")
-    elif category == "zip":
-        new_gdf = gdf.merge(df, left_on="GEOID10", right_on="postal_code", how="outer")
+    
+    new_gdf = new_gdf[~new_gdf["id"].isna()]
+    new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
     return new_gdf
+
+
+
+def join_indicators(gdf, df, indicator):
+    new_gdf = None
+    if indicator == "DM_":
+        new_gdf = gdf.merge(df, left_on=["id", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "ECON_":
+        new_gdf = gdf.merge(df, left_on=["id", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "HVA_":
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "MG_":
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "MNCH_":
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "PT_":
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "PV_":
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+    elif indicator == "WS_":
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
+
+    return new_gdf
+
 
 
 def select_non_null(gdf, col_name):
@@ -160,34 +133,21 @@ def select_null(gdf, col_name):
     return new_gdf
 
 
-def get_data_dict(name):
-    in_csv = os.path.join(os.getcwd(), "data/realtor_data_dict.csv")
+def get_indicator_dict(name):
+    in_csv = os.path.join(os.getcwd(), "data/umr/umr_data_dict_INDICATOR.csv")
     df = pd.read_csv(in_csv)
-    label = list(df[df["Name"] == name]["Label"])[0]
-    desc = list(df[df["Name"] == name]["Description"])[0]
+    label = list(df[df["key"] == name]["Label"])[0]
+    desc = list(df[df["value"] == name]["Description"])[0]
     return label, desc
 
-
-def get_weeks(df):
-    seq = list(set(df[~df["week_end_date"].isnull()]["week_end_date"].tolist()))
-    weeks = [
-        datetime.date(int(d.split("/")[2]), int(d.split("/")[0]), int(d.split("/")[1]))
-        for d in seq
-    ]
-    weeks.sort()
-    return weeks
-
-
-def get_saturday(in_date):
-    idx = (in_date.weekday() + 1) % 7
-    sat = in_date + datetime.timedelta(6 - idx)
-    return sat
-
+def get_indicators(df):
+    indicator_list = df["INDICATOR"].unique()
+    return indicator_list
 
 def app():
 
-    st.title("Net Migration Rate (per 1000 population)")
-    st.markdown(
+    st.title("Net Migration Rate Analysis")
+    st.write(
         """Several open-source packages are used to process the data and generate the visualizations, e.g., [streamlit](https://streamlit.io),
           [geopandas](https://geopandas.org), [leafmap](https://leafmap.org), and [pydeck](https://deckgl.readthedocs.io).
         """
@@ -197,31 +157,40 @@ def app():
         [0.6, 0.8, 0.6, 1.4, 2]
     )
 
+    years_list = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
+
     with row1_col1:
-        selected_year = st.selectbox("Year", [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 
-        2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022])
+        selected_year = st.selectbox("Year", years_list )
 
     with row1_col2:
-        indicator_group = "DM_" #st.selectbox("Indicator Group", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
+        indicator = st.selectbox("Indicator Group", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
 
     # manually setting these for now
     frequency = "annual"
     scale = "countries"
     gdf = get_geom_data(scale.lower())
-    # st.write(gdf.head())
-    inventory_df = get_inventory_data(data_links["net_migration"][scale.lower()])
+
+
+    # Get Net Migration Data
+    inventory_df = get_reference_data(data_links["reference"][scale.lower()])
+
+    # Filter by selected year
     inventory_df = inventory_df[inventory_df.TIME_PERIOD==selected_year]
+    # Calculate columns
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
+
+
 
     with row1_col4:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
 
     with row1_col5:
-        show_desc = "no"
+        st.write(".")
+        # show_desc = "no"
         # show_desc = st.checkbox("Show attribute description")
         # if show_desc:
         #     try:
-        #         label, desc = get_data_dict(selected_col.strip())
+        #         label, desc = get_indicator_dict(indicator.strip())
         #         markdown = f"""
         #         **{label}**: {desc}
         #         """
@@ -252,11 +221,24 @@ def app():
         else:
             elev_scale = 1
 
+
+    # First JOIN
     gdf = join_attributes(gdf, inventory_df, scale.lower())
+
+    # Join Additional indicators
+    indicator_df = get_indicator_data(data_links["indicator"][indicator])
+    # gdf = join_indicators(gdf, indicator_df, indicator)
+
+    st.write(gdf.head(3))
+
+
+
+
 
     gdf_null = select_null(gdf, selected_col)
     gdf = select_non_null(gdf, selected_col)
     gdf = gdf.sort_values(by=selected_col, ascending=True)
+
 
     colors = cm.get_palette(palette, n_colors)
     colors = [hex_to_rgb(c) for c in colors]
@@ -325,7 +307,7 @@ def app():
 
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
     tooltip = {
-        "html": "<b>Name:</b> {REF_AREA}<br><b>Value:</b> {"
+        "html": "<b>Name:</b> {id}<br><b>Value:</b> {"
         + selected_col
         + "}<br><b>Year:</b> "
         + str(selected_year)
@@ -352,7 +334,7 @@ def app():
         st.write(
             cm.create_colormap(
                 palette,
-                label=selected_col.replace("_", " ").title(),
+                label="Net Migration Rate\n per 1k population", #selected_col.replace("_", " ").title(),
                 width=0.2,
                 height=3,
                 orientation="vertical",

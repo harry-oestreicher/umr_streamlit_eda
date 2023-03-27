@@ -4,12 +4,7 @@ import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
 from src.utils.dataio import get_data
-from sqlalchemy import inspect, create_engine
 
-# Initialize SQL engine and prepare queries for this page
-connection_string = 'sqlite:///./src/data/data.db'
-engine = create_engine(connection_string)
-insp = inspect(engine)
 # populate dataframes
 cities_df = get_data("SELECT * FROM CITIES;")
 assets_df = get_data("SELECT * FROM ASSETS;")
