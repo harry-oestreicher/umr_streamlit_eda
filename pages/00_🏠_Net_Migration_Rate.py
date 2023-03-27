@@ -104,7 +104,7 @@ def get_geom_data(category):
     links = {
         "continents": prefix + "world/continents.geojson",
         "countries": prefix + "world/countries.json",
-        "countries_hires": link_prefix + "countries_hires.geojson",
+        "countries_hires": prefix + "world/countries_hires.geojson",
         "world_cities_5000": prefix + "world/cities5000.csv",
         "world_cities": prefix + "world/world_cities.geojson",
         "us": prefix + "us/us_nation.geojson",
@@ -123,6 +123,7 @@ def get_geom_data(category):
         gdf = gpd.read_file(out_zip.replace("zip", "shp"))
     else:
         gdf = gpd.read_file(links[category])
+
     return gdf
 
 
@@ -140,6 +141,8 @@ def join_attributes(gdf, df, category):
         new_gdf = gdf.merge(df, left_on="NAME", right_on="country", how="outer")
     elif category == "countries":
         new_gdf = gdf.merge(df, left_on="id", right_on="REF_AREA", how="outer")
+    elif category == "countries_hires":
+        new_gdf = gdf.merge(df, left_on="ISO_A3", right_on="REF_AREA", how="outer")
     elif category == "metro":
         new_gdf = gdf.merge(df, left_on="CBSAFP", right_on="cbsa_code", how="outer")
     elif category == "zip":
@@ -205,6 +208,7 @@ def app():
     frequency = "annual"
     scale = "countries"
     gdf = get_geom_data(scale.lower())
+    # st.write(gdf.head())
     inventory_df = get_inventory_data(data_links["net_migration"][scale.lower()])
     inventory_df = inventory_df[inventory_df.TIME_PERIOD==selected_year]
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
