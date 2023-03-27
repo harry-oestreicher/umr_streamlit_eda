@@ -19,18 +19,11 @@ DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
 if not DOWNLOADS_PATH.is_dir():
     DOWNLOADS_PATH.mkdir()
 
-# Data source: https://www.realtor.com/research/data/
-# link_prefix = "https://econdata.s3-us-west-2.amazonaws.com/Reports/"
-# link_prefix = "https://raw.githubusercontent.com/giswqs/data/main/housing/"
-link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_streamlit_eda/main/src/data/umr/"
-
-
-# https://raw.githubusercontent.com/harry-oestreicher/umr_streamlit_eda/main/src/data/umr/umr_data_DM_NET_MG_RATE_1950-2022.csv?token=GHSAT0AAAAAAB6FHUWONTUE4DFGGS66GEYSZBA6MWQ
+link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
 
 data_links = {
     "net_migration": {
-        "world": link_prefix + "umr_eda_NMR.csv?token=GHSAT0AAAAAAB6FHUWPJTV6KWP2FF2JO2TIZBA7MDQ",
-        # "national": link_prefix + "Core/listing_weekly_core_aggregate_by_metro.csv",
+        "countries": link_prefix + "umr_eda_NMR.csv",
     },
     "risk_factors": {
         "DM_": link_prefix + "umr_data_DM_.csv",
@@ -45,36 +38,22 @@ data_links = {
 }
 
 
-def get_data_columns(df, category, frequency="annual"):
-    # if frequency == "annual":
-    #     if category.lower() == "world":
-    #         del_cols = ["month_date_yyyymm", "county_fips", "county_name"]
-
-    # elif frequency == "monthly":
-    #     if category.lower() == "us":
-    #         del_cols = ["week_end_date", "geo_country"]
-    #     elif category.lower() == "counties":
-    #         del_cols = ["week_end_date", "cbsa_code", "cbsa_title", "hh_rank"]
+def get_data_columns(df, category="world", frequency="annual"):
 
     cols = df.columns.values.tolist()
 
-    # for col in cols:
-    #     if col.strip() in del_cols:
-    #         cols.remove(col)
-    
-    # if category.lower() == "metro":
-    #     return cols[2:]
-    # else:
     return cols[1:]
 
 
 @st.cache_data
 def get_inventory_data(url):
     df = pd.read_csv(url)
-    # url = url.lower()
-    # if "county" in url:
+    url = url.lower()
+
+    # if "umr_eda_NMR" in url:
     #     df["county_fips"] = df["county_fips"].map(str)
     #     df["county_fips"] = df["county_fips"].str.zfill(5)
+
     # elif "state" in url:
     #     df["STUSPS"] = df["state_id"].str.upper()
     # elif "metro" in url:
@@ -95,7 +74,7 @@ def get_inventory_data(url):
     #             df[column] = df[column].str.rstrip("%").astype(float) / 100
     #     df["cbsa_code"] = df["cbsa_code"].str[:5]
 
-    df = df[df.TIME_PERIOD==2022]
+    # df = df[df.TIME_PERIOD==2022]
 
     return df
 
@@ -119,17 +98,19 @@ def get_inventory_data(url):
 def get_geom_data(category):
 
     prefix = (
-        # "https://raw.githubusercontent.com/giswqs/streamlit-geospatial/master/data/"
-        "https://raw.githubusercontent.com/giswqs/data/main/"
+        "https://raw.githubusercontent.com/harry-oestreicher/gis-data/main/"
     )
 
     links = {
-        "world": prefix + "world/countries.json",
+        "continents": prefix + "world/continents.geojson",
+        "countries": prefix + "world/countries.json",
+        "countries_hires": link_prefix + "countries_hires.geojson",
+        "world_cities_5000": prefix + "world/cities5000.csv",
+        "world_cities": prefix + "world/world_cities.geojson",
         "us": prefix + "us/us_nation.geojson",
         "state": prefix + "us/us_states.geojson",
         "county": prefix + "us/us_counties.geojson",
         "metro": prefix + "us/us_metro_areas.geojson",
-        # "zip": "https://www2.census.gov/geo/tiger/GENZ2018/shp/cb_2018_us_zcta510_500k.zip",
     }
 
     if category.lower() == "zip":
@@ -157,7 +138,7 @@ def join_attributes(gdf, df, category):
             df["country"] = None
             df.loc[0, "country"] = "United States"
         new_gdf = gdf.merge(df, left_on="NAME", right_on="country", how="outer")
-    elif category == "world":
+    elif category == "countries":
         new_gdf = gdf.merge(df, left_on="id", right_on="REF_AREA", how="outer")
     elif category == "metro":
         new_gdf = gdf.merge(df, left_on="CBSAFP", right_on="cbsa_code", how="outer")
@@ -202,114 +183,47 @@ def get_saturday(in_date):
 
 def app():
 
-    st.title("TESTING")
+    st.title("Net Migration Rate (per 1000 population)")
     st.markdown(
         """Several open-source packages are used to process the data and generate the visualizations, e.g., [streamlit](https://streamlit.io),
           [geopandas](https://geopandas.org), [leafmap](https://leafmap.org), and [pydeck](https://deckgl.readthedocs.io).
-    """
+        """
     )
 
     row1_col1, row1_col2, row1_col3, row1_col4, row1_col5 = st.columns(
         [0.6, 0.8, 0.6, 1.4, 2]
     )
-    with row1_col1:
-        frequency = "annual"
 
-        risk_factor = st.selectbox("Risk Factors", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
+    with row1_col1:
+        selected_year = st.selectbox("Year", [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 
+        2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022])
 
     with row1_col2:
-        selected_year = "2021" #st.selectbox("Year", ["2000", "2001", "2022"])
+        indicator_group = "DM_" #st.selectbox("Indicator Group", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
 
-    #     types = ["Current month data", "Historical data"]
-    #     if frequency == "Weekly":
-    #         types.remove("Current month data")
-    #     cur_hist = st.selectbox(
-    #         "Current/historical data",
-    #         types,
-    #     )
-    # with row1_col3:
-    #     if frequency == "Monthly":
-    #         scale = st.selectbox(
-    #             "Scale", ["National", "State", "Metro", "County"], index=3
-    #         )
-    #     else:
-    #         scale = st.selectbox("Scale", ["National", "Metro"], index=1)
-
-    scale = "world"
-
+    # manually setting these for now
+    frequency = "annual"
+    scale = "countries"
     gdf = get_geom_data(scale.lower())
-
     inventory_df = get_inventory_data(data_links["net_migration"][scale.lower()])
-
-
-    # if frequency == "Weekly":
-    #     inventory_df = get_inventory_data(data_links["weekly"][scale.lower()])
-    #     weeks = get_weeks(inventory_df)
-    #     with row1_col1:
-    #         selected_date = st.date_input("Select a date", value=weeks[-1])
-    #         saturday = get_saturday(selected_date)
-    #         selected_period = saturday.strftime("%-m/%-d/%Y")
-    #         if saturday not in weeks:
-    #             st.error(
-    #                 "The selected date is not available in the data. Please select a date between {} and {}".format(
-    #                     weeks[0], weeks[-1]
-    #                 )
-    #             )
-    #             selected_period = weeks[-1].strftime("%-m/%-d/%Y")
-    #     inventory_df = get_inventory_data(data_links["weekly"][scale.lower()])
-    #     inventory_df = filter_weekly_inventory(inventory_df, selected_period)
-
-    # if frequency == "Monthly":
-    #     if cur_hist == "Current month data":
-    #         inventory_df = get_inventory_data(
-    #             data_links["monthly_current"][scale.lower()]
-    #         )
-    #         selected_period = get_periods(inventory_df)[0]
-    #     else:
-    #         with row1_col2:
-    #             inventory_df = get_inventory_data(
-    #                 data_links["monthly_historical"][scale.lower()]
-    #             )
-    #             start_year, end_year = get_start_end_year(inventory_df)
-    #             periods = get_periods(inventory_df)
-    #             with st.expander("Select year and month", True):
-    #                 selected_year = st.slider(
-    #                     "Year",
-    #                     start_year,
-    #                     end_year,
-    #                     value=start_year,
-    #                     step=1,
-    #                 )
-    #                 selected_month = st.slider(
-    #                     "Month",
-    #                     min_value=1,
-    #                     max_value=12,
-    #                     value=int(periods[0][-2:]),
-    #                     step=1,
-    #                 )
-    #             selected_period = str(selected_year) + str(selected_month).zfill(2)
-    #             if selected_period not in periods:
-    #                 st.error("Data not available for selected year and month")
-    #                 selected_period = periods[0]
-    #             inventory_df = inventory_df[
-    #                 inventory_df["month_date_yyyymm"] == int(selected_period)
-    #             ]
-
+    inventory_df = inventory_df[inventory_df.TIME_PERIOD==selected_year]
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
 
     with row1_col4:
-        selected_col = "OBS_VALUE" #   st.selectbox("Attribute", data_cols)
+        selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
+
     with row1_col5:
-        show_desc = st.checkbox("Show attribute description")
-        if show_desc:
-            try:
-                label, desc = get_data_dict(selected_col.strip())
-                markdown = f"""
-                **{label}**: {desc}
-                """
-                st.markdown(markdown)
-            except:
-                st.warning("No description available for selected attribute")
+        show_desc = "no"
+        # show_desc = st.checkbox("Show attribute description")
+        # if show_desc:
+        #     try:
+        #         label, desc = get_data_dict(selected_col.strip())
+        #         markdown = f"""
+        #         **{label}**: {desc}
+        #         """
+        #         st.markdown(markdown)
+        #     except:
+        #         st.warning("No description available for selected attribute")
 
     row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
         [0.6, 0.68, 0.7, 0.7, 1.5, 0.8]
@@ -317,7 +231,7 @@ def app():
 
     palettes = cm.list_colormaps()
     with row2_col1:
-        palette = st.selectbox("Color palette", palettes, index=palettes.index("RdYlGn"))
+        palette = st.selectbox("Color palette", palettes, index=palettes.index("Blues"))
     with row2_col2:
         n_colors = st.slider("Number of colors", min_value=2, max_value=20, value=8)
     with row2_col3:
@@ -335,9 +249,9 @@ def app():
             elev_scale = 1
 
     gdf = join_attributes(gdf, inventory_df, scale.lower())
+
     gdf_null = select_null(gdf, selected_col)
     gdf = select_non_null(gdf, selected_col)
-    # gdf = gdf[gdf.TIME_PERIOD==selected_year]
     gdf = gdf.sort_values(by=selected_col, ascending=True)
 
     colors = cm.get_palette(palette, n_colors)
@@ -410,8 +324,8 @@ def app():
         "html": "<b>Name:</b> {REF_AREA}<br><b>Value:</b> {"
         + selected_col
         + "}<br><b>Year:</b> "
-        # + selected_period
-        + "2022",
+        + str(selected_year)
+        + "",
         "style": {"backgroundColor": "steelblue", "color": "white"},
     }
 
