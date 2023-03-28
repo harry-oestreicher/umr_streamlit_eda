@@ -1,5 +1,6 @@
 import datetime
 import os
+import time
 import pathlib
 import requests
 import zipfile
@@ -45,6 +46,7 @@ def get_data_columns(df, category="world", frequency="annual"):
 def get_reference_data(url):
     df = pd.read_csv(url)
     df.drop(columns=["Unnamed: 0", "AGE"], inplace=True)
+    df = df[df.TIME_PERIOD>2011]
     # url = url.lower()
     return df
 
@@ -154,11 +156,11 @@ def app():
         """
     )
 
-    row1_col1, row1_col2, row1_col3, row1_col4, row1_col5 = st.columns(
-        [0.5, 0.5, 1.2, 0.8, 1]
+    row1_col1, row1_col2, row1_col3  = st.columns(
+        [0.5, 0.5, 3]
     )
 
-    years_list = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
+    years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
 
     with row1_col1:
         selected_year = st.selectbox("Year", years_list )
@@ -185,29 +187,30 @@ def app():
 
     with row1_col3:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
-        st.write(indicator_df.head(3))
+        # st.write(indicator_df.head(3))
+        st.dataframe(indicator_df, height=120)
         # ind_list = indicator_df["INDICATOR"].unique()
         # st.write(indicator_df)
 
 
-    with row1_col5:
-        # get_indicator_dict(name)
-        show_desc = "no"
-        show_desc = st.checkbox("Show indicator description")
-        if show_desc:
-            try:
-                # label, desc = get_indicator_dict(indicator.strip())
-                # markdown = f"""
-                # **{label}**: {desc}
-                # """
-                # st.markdown(markdown)
+    # with row1_col5:
+    # get_indicator_dict(name)
+    show_desc = "no"
+    show_desc = st.checkbox("Show indicator description")
+    if show_desc:
+        try:
+            # label, desc = get_indicator_dict(indicator.strip())
+            # markdown = f"""
+            # **{label}**: {desc}
+            # """
+            # st.markdown(markdown)
 
-                for i in indicator_df["INDICATOR"].unique():
-                    st.write(f"{get_indicator_dict(i)}")
-                    pass
+            for i in indicator_df["INDICATOR"].unique():
+                st.write(f"- **{i}**: {get_indicator_dict(i)}")
+                pass
 
-            except:
-                st.warning("No description available for selected attribute")
+        except:
+            st.warning("No description available for selected attribute")
 
     row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
         [0.6, 0.68, 0.7, 0.7, 1.5, 0.8]
@@ -345,26 +348,6 @@ def app():
                 font_size=10,
             )
         )
-    # row4_col1, row4_col2, row4_col3 = st.columns([1, 2, 3])
-    # with row4_col1:
-    #     show_data = st.checkbox("Show raw data")
-    # with row4_col2:
-    #     show_cols = st.multiselect("Select columns", data_cols)
-    # with row4_col3:
-    #     show_colormaps = st.checkbox("Preview all color palettes")
-    #     if show_colormaps:
-    #         st.write(cm.plot_colormaps(return_fig=True))
-    # if show_data:
-    #     if scale == "National":
-    #         st.dataframe(gdf[["NAME", "GEOID"] + show_cols])
-    #     elif scale == "State":
-    #         st.dataframe(gdf[["NAME", "STUSPS"] + show_cols])
-    #     elif scale == "County":
-    #         st.dataframe(gdf[["NAME", "STATEFP", "COUNTYFP"] + show_cols])
-    #     elif scale == "Metro":
-    #         st.dataframe(gdf[["NAME", "CBSAFP"] + show_cols])
-    #     elif scale == "Zip":
-    #         st.dataframe(gdf[["GEOID10"] + show_cols])
 
 
 app()
