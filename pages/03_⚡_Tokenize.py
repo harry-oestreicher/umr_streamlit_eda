@@ -2,7 +2,7 @@
 import sys
 import datetime
 import logging
-# from turtle import color
+from turtle import color
 import streamlit as st
 import streamlit.components.v1 as components
 from src.utils.dataio import get_data, create_transaction

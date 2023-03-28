@@ -28,16 +28,16 @@ st.set_page_config(layout="wide")
 def main():
     #Header information 
     st.title("System Settings and Data", anchor=None)
-    st.markdown("Web3 settings:")
-    st.markdown("---")
-    st.write(donor_account)
-    st.write(contract_address)
-    st.write(contract_abi)
-    st.write(ipfs_uri)
-    st.write(web3_provider_uri)
-    st.markdown("---")
+    # st.markdown("Web3 settings:")
+    # st.markdown("---")
+    # st.write(donor_account)
+    # st.write(contract_address)
+    # st.write(contract_abi)
+    # st.write(ipfs_uri)
+    # st.write(web3_provider_uri)
+    # st.markdown("---")
 
-    btn =  st.button("RESET ALL db tables")
+    btn =  st.button("Initialize and seed the database")
     if btn:
         # re-initialize the database
         init_data()
