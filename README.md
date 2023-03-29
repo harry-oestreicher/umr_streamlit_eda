@@ -6,6 +6,9 @@
 
 This MVP explores the risk factors related to underage migrant youths.
 
+![GIS EDA](src/images/umr_streamlit_eda1.png "screenshot")
+
+
 ## Getting Started & Running the Code
 
 #### Technology Stack:

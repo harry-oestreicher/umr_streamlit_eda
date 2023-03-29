@@ -27,7 +27,7 @@ if 'sidebar_state' not in st.session_state:
 st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state, layout="wide")
 
 # Show title and description of the app.
-st.title("Unaccompanied Minor Research")
+st.title("Net Migration Rate 2021")
 st.sidebar.write("""
 **Sidebar**
 
@@ -182,8 +182,6 @@ def app():
     # st.title("Unaccompanied Minor Research")
     st.write(
         """
-        ## Net Migration Rate (per 1000 population)
-
         ### Exploratory Data Analysis
 
         Several open-source packages are used to process the data and generate the visualizations, e.g., [streamlit](https://streamlit.io),
@@ -232,7 +230,7 @@ def app():
         this_indicator_text = get_indicator_dict(this_indicator)
         # Display the indicator full text
         st.write(this_indicator_text)
-        st.write(indicator_df["OBS_VALUE"].dtype)
+        # st.write(indicator_df["OBS_VALUE"].dtype)
 
 
     show_tables = "no"
