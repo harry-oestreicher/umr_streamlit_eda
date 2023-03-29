@@ -11,6 +11,12 @@ import streamlit as st
 import leafmap.colormaps as cm
 from leafmap.common import hex_to_rgb
 
+# load the world dataset
+world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
+cities = gpd.read_file(gpd.datasets.get_path('naturalearth_cities'))
+
+
+
 # Begin Streamlit
 # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
 if 'sidebar_state' not in st.session_state:
@@ -140,6 +146,8 @@ def join_indicator(gdf, df, indicator):
         new_gdf = new_gdf[~new_gdf["id"].isna()]
         new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
 
+    new_gdf = new_gdf[~new_gdf["geometry"].isna()]
+
     return new_gdf
 
 
@@ -232,8 +240,6 @@ def app():
             indicator_df = indicator_df[indicator_df.INDICATOR==this_indicator]
             st.write(f"#### {this_indicator} Layer")
             st.write(indicator_df)
-    
-
 
 
     row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
@@ -243,11 +249,13 @@ def app():
     palettes = cm.list_colormaps()
 
     with row2_col1:
-        palette = st.selectbox("Color palette", palettes, index=palettes.index("Blues"))
+        palette1 = st.selectbox("Net Migration Color palette", palettes, index=palettes.index("Blues"))
+        palette2 = st.selectbox(f"{this_indicator} Color palette", palettes, index=palettes.index("Greens"))
+
     with row2_col2:
         n_colors = st.slider("Number of colors", min_value=2, max_value=20, value=8)
     with row2_col3:
-        show_nodata = st.checkbox("Show nodata areas", value=True)
+        # show_nodata = st.checkbox("Show nodata areas", value=True)
         show_indicator = st.checkbox("Show indicator areas", value=False)
 
     with row2_col4:
@@ -255,7 +263,7 @@ def app():
     with row2_col5:
         if show_3d:
             elev_scale = st.slider(
-                "Elevation scale", min_value=1, max_value=10000, value=1, step=10
+                "Elevation scale", min_value=1, max_value=1000, value=1, step=10
             )
             with row2_col6:
                 st.info("Press Ctrl and move the left mouse button.")
@@ -263,7 +271,8 @@ def app():
             elev_scale = 1
 
 
-    # ############################# The JOINS
+    # ###################### The `JOINS` ###############################################
+
     gdf = join_attributes(gdf, inventory_df, scale.lower())
     gdf_null = select_null(gdf, selected_col)
     gdf = select_non_null(gdf, selected_col)
@@ -271,23 +280,54 @@ def app():
 
     gdf2 = get_geom_data(scale.lower())
     gdf2 = join_indicator(gdf2, indicator_df, indicator)
+    # # # Create centroids projection on flat projection, then back
+    # gdf2["country_centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
+    # gdf2.drop(columns=["geometry"], inplace=True)
+    # gdf2["long"] = gdf2.country_centroids.map(lambda p: p.x)
+    # gdf2["lat"] = gdf2.country_centroids.map(lambda p: p.y)
+    # gdf2.drop(columns=["country_centroids"], inplace=True)
+
     gdf2_null = select_null(gdf2, selected_col)
     gdf2 = select_non_null(gdf2, selected_col)
     gdf2 = gdf2.sort_values(by=selected_col, ascending=True)
 
+    # st.write(gdf2)
 
-    # ###################### GENERATE Coloro ranges
 
-    colors = cm.get_palette(palette, n_colors)
-    colors = [hex_to_rgb(c) for c in colors]
 
-    for i, ind in enumerate(gdf.index):
-        index = int(i / (len(gdf) / len(colors)))
-        if index >= len(colors):
-            index = len(colors) - 1
-        gdf.loc[ind, "R"] = colors[index][0]
-        gdf.loc[ind, "G"] = colors[index][1]
-        gdf.loc[ind, "B"] = colors[index][2]
+
+    # ###################### Colors
+ 
+    geo_colors_1 = cm.get_palette(palette1, n_colors)
+    geo_colors_2 = cm.get_palette(palette2, n_colors)
+
+
+    def gen_colors(gdf, colors):
+        colors = [hex_to_rgb(c) for c in colors]
+
+        for i, ind in enumerate(gdf.index):
+            index = int(i / (len(gdf) / len(colors)))
+            if index >= len(colors):
+                index = len(colors) - 1
+            gdf.loc[ind, "R"] = colors[index][0]
+            gdf.loc[ind, "G"] = colors[index][1]
+            gdf.loc[ind, "B"] = colors[index][2]
+            pass
+
+        min_value = gdf[selected_col].min()
+        max_value = gdf[selected_col].max()
+
+        return gdf, min_value, max_value, colors
+
+    geo_layer_1, min1, max1, colors1 = gen_colors(gdf, geo_colors_1)
+    geo_layer_2, min2, max2, colors2 = gen_colors(gdf2, geo_colors_2)
+
+    # min_ind_value = gdf2[selected_col].min()
+    # max_ind_value = gdf2[selected_col].max()
+
+    color = "color"
+    # color_exp = f"[({selected_col}-{min_value})/({max_value}-{min_value})*255, 0, 0]"
+    color_exp = f"[R, G, B]"
 
     initial_view_state = pdk.ViewState(
         latitude=40,
@@ -300,19 +340,12 @@ def app():
         width=None,
     )
 
-    min_value = gdf[selected_col].min()
-    max_value = gdf[selected_col].max()
-    color = "color"
-    # color_exp = f"[({selected_col}-{min_value})/({max_value}-{min_value})*255, 0, 0]"
-    color_exp = f"[R, G, B]"
-
-
     # ###################  Make Leaflet layers
     geojson = pdk.Layer(
         "GeoJsonLayer",
-        gdf,
+        geo_layer_1,
         pickable=True,
-        opacity=0.5,
+        opacity=0.6,
         stroked=True,
         filled=True,
         extruded=show_3d,
@@ -345,15 +378,15 @@ def app():
 
     geojson_indicator = pdk.Layer(
         "GeoJsonLayer",
-        gdf2,
+        geo_layer_2,
         pickable=True,
-        opacity=0.9,
+        opacity=0.2,
         stroked=True,
         filled=True,
         extruded=show_3d,
         wireframe=True,
         get_elevation=f"{selected_col}",
-        elevation_scale=elev_scale,
+        elevation_scale=elev_scale/2,
         # get_fill_color="color",
         get_fill_color=color_exp,
         get_line_color=[0, 0, 0],
@@ -361,10 +394,25 @@ def app():
         line_width_min_pixels=1,
     )
     
+    # geojson_indicator = pdk.Layer(
+    #     'HexagonLayer',  # `type` positional argument is here
+    #     geo_layer_2,
+    #     get_position=['long', 'lat'],
+    #     auto_highlight=True,
+    #     elevation_scale=50,
+    #     pickable=True,
+    #     elevation_range=[0, 3000],
+    #     extruded=True,
+    #     coverage=1)
+
+
+
+
+
     # tooltip = {"text": "Name: {NAME}"}
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
 
-    tooltip = {
+    tooltip1 = {
         "html": "<b>Name:</b> {id}<br><b>Value:</b> {"
         + selected_col
         + "}<br><b>Year:</b> "
@@ -374,8 +422,8 @@ def app():
     }
 
     layers = [geojson]
-    if show_nodata:
-        layers.append(geojson_null)
+    # if show_nodata:
+    #     layers.append(geojson_null)
     
     if show_indicator:
         layers.append(geojson_indicator)
@@ -384,25 +432,36 @@ def app():
         layers=layers,
         initial_view_state=initial_view_state,
         map_style="light",
-        tooltip=tooltip,
+        tooltip=tooltip1,
     )
 
     row3_col1, row3_col2 = st.columns([6, 1])
 
+
     with row3_col1:
         st.pydeck_chart(r)
+        st.write(
+            cm.create_colormap(
+                palette1,
+                label="Net Migration Rate per 1k population", #selected_col.replace("_", " ").title(),
+                height=0.1,
+                vmin=min1,
+                vmax=max1,
+                font_size=5,
+            )
+        )
 
     with row3_col2:
         st.write(
             cm.create_colormap(
-                palette,
-                label="Net Migration Rate\n per 1k population", #selected_col.replace("_", " ").title(),
-                width=0.2,
-                height=3,
+                palette2,
+                label=f"{this_indicator_text}", #selected_col.replace("_", " ").title(),
+                width=0.05,
+                height=2.5,
                 orientation="vertical",
-                vmin=min_value,
-                vmax=max_value,
-                font_size=10,
+                vmin=min1,
+                vmax=max1,
+                font_size=5,
             )
         )
 
