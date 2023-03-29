@@ -1,5 +1,6 @@
 import datetime
 import os
+import sys
 import time
 import math
 import pathlib
@@ -12,10 +13,13 @@ import streamlit as st
 import leafmap.colormaps as cm
 from leafmap.common import hex_to_rgb
 
+sys.path.append("..")
+from src.data.dictionary import get_dictionary
+INDICATOR_dict = get_dictionary('INDICATOR')
+
 # load the world dataset
 world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
 cities = gpd.read_file(gpd.datasets.get_path('naturalearth_cities'))
-
 
 
 # Begin Streamlit
@@ -117,9 +121,11 @@ def join_attributes(gdf, df, category):
     elif category == "countries_hires":
         new_gdf = gdf.merge(df, left_on="ISO_A3", right_on="REF_AREA", how="outer")
         new_gdf.rename(columns={'ISO_A3': 'id'}, inplace=True)
-    
+
+    # new_gdf['INDICATOR'] = 'Net Migration Rate'
+
     new_gdf = new_gdf[~new_gdf["id"].isna()]
-    new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
+    new_gdf = new_gdf.drop(columns=["REF_AREA"])
     return new_gdf
 
 
@@ -173,6 +179,16 @@ def get_indicator_dict(name):
     value = df[df.key==name]["value"].values[0]
     return value
 
+
+def enumerate_column(col_in):
+    if col_in == "REF_AREA":
+        REF_AREA = REF_AREA_dict
+        val = REF_AREA.get(col_in)
+
+    elif col_in == "INDICATOR":
+        INDICATOR = INDICATOR_dict
+        val = INDICATOR.get(col_in)
+    return val
 
 def get_indicators(df):
     indicator_list = df["INDICATOR"].unique()
@@ -291,6 +307,8 @@ def app():
     gdf = join_attributes(gdf, inventory_df, scale.lower())
     gdf_null = select_null(gdf, selected_col)
     gdf = select_non_null(gdf, selected_col)
+    gdf.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
+
     gdf = gdf.sort_values(by=selected_col, ascending=True)
 
     gdf2 = get_geom_data(scale.lower())
@@ -313,7 +331,8 @@ def app():
     gdf2 = select_non_null(gdf2, selected_col)
     gdf2 = gdf2.sort_values(by=selected_col, ascending=True)
     gdf2 = gdf2[gdf2.INDICATOR==this_indicator]
-
+    # gdf2["INDICATOR"] = get_indicator_dict(gdf2["INDICATOR"])
+    gdf2.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
     # st.write(gdf2)
 
 
@@ -428,12 +447,12 @@ def app():
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
 
     tooltip1 = {
-        "html": "<b>Name:</b> {id}<br><b>Value:</b> {"
+        "html": "<b>Name:</b>{name}<br><b>{INDICATOR}:</b> {"
         + selected_col
         + "}<br><b>Year:</b> "
         + str(selected_year)
         + "",
-        "style": {"backgroundColor": "steelblue", "color": "white"},
+        "style": {"backgroundColor": "beige", "color": "black"},
     }
 
     layers = [geojson]
