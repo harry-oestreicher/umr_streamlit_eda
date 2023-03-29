@@ -131,19 +131,23 @@ def join_indicator(gdf, df, indicator):
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "MG_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        # new_gdf["OBS_VALUE"] = new_gdf["OBS_VALUE"].values+100
+        new_gdf["OBS_VALUE"] = new_gdf["OBS_VALUE"].astype(float)
+
     elif indicator == "MNCH_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "PT_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
-    elif indicator == "PV_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+    # elif indicator == "PV_":
+    #     new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "WS_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
         # new_gdf.rename(columns={'OBS_VALUE': f"{this_indicator}"}, inplace=True)
         new_gdf = new_gdf[~new_gdf["id"].isna()]
-        new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
+        # new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
 
     new_gdf = new_gdf[~new_gdf["geometry"].isna()]
+    
     # # # Create centroids projection on flat projection, then back
     # gdf2["country_centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
     # gdf2.drop(columns=["geometry"], inplace=True)
@@ -189,17 +193,17 @@ def app():
     )
 
     row1_col1, row1_col2, row1_col3  = st.columns(
-        [0.5, 0.5, 2]
+        [1,1,4.5]
     )
 
     # years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
 
     with row1_col1:
-        st.write("Year: 2021")
+        st.write("**Year: 2021**")
         selected_year = 2021 #st.selectbox("Year", years_list )
 
     with row1_col2:
-        indicator = st.selectbox("Indicator Group", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
+        indicator = st.selectbox("**Risk Factor Group**", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "WS_"])
 
     # manually setting these for now
     frequency = "annual"
@@ -216,16 +220,19 @@ def app():
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
 
     indicator_df = get_indicator_data(data_links["indicator"][indicator])
+    #########################################
+    indicator_df = indicator_df[indicator_df.INDICATOR!="DM_NET_MG_RATE"]
     indicator_df = indicator_df[indicator_df.TIME_PERIOD==selected_year]
 
     with row1_col3:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
         # st.write(indicator_df.head(3))
         this_ind_list = indicator_df["INDICATOR"].unique().tolist()
-        this_indicator = st.selectbox("Indicator:", this_ind_list)
+        this_indicator = st.selectbox("**Risk Factor:**", this_ind_list)
         this_indicator_text = get_indicator_dict(this_indicator)
         # Display the indicator full text
         st.write(this_indicator_text)
+        st.write(indicator_df["OBS_VALUE"].dtype)
 
 
     show_tables = "no"
@@ -246,24 +253,18 @@ def app():
 
 
     row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
-        [0.6, 0.68, 0.7, 0.7, 1.5, 0.8]
+        [1, 1, 1, 1, 2, 0.5]
     )
 
     palettes = cm.list_colormaps()
 
     with row2_col1:
-        palette1 = st.selectbox("Net Migration Color palette", palettes, index=palettes.index("Blues"))
-        palette2 = st.selectbox(f"{this_indicator} Color palette", palettes, index=palettes.index("Greens"))
+        palette1 = st.selectbox("**Net Migration Rate:**", palettes, index=palettes.index("Blues"))
+        palette2 = "Greens" #st.selectbox(f"{this_indicator} Color palette", palettes, index=palettes.index("Greens"))
 
     with row2_col2:
         n_colors = st.slider("Number of colors", min_value=2, max_value=20, value=8)
-    with row2_col3:
-        # show_nodata = st.checkbox("Show nodata areas", value=True)
-        show_indicator = st.checkbox("Show indicator areas", value=False)
-
-    with row2_col4:
         show_3d = st.checkbox("Show 3D view", value=False)
-    with row2_col5:
         if show_3d:
             elev_scale = st.slider(
                 "Elevation scale", min_value=1, max_value=1000, value=1, step=10
@@ -272,6 +273,19 @@ def app():
                 st.info("Press Ctrl and move the left mouse button.")
         else:
             elev_scale = 1
+        
+
+    with row2_col3:
+        # show_nodata = st.checkbox("Show nodata areas", value=True)
+        st.write("**Risk Factor:**")
+        show_indicator = st.checkbox("Show Points", value=True)
+
+    with row2_col4:
+        ind_scale = st.slider("Scale:", min_value=1, max_value=20, value=4)
+
+    with row2_col5:
+        st.write(".")
+
 
 
     # ###################### The `JOINS` ###############################################
@@ -391,7 +405,7 @@ def app():
     # st.write(geo_layer_1)
     geo_layer_2["OBS_VALUE"] = round(geo_layer_2["OBS_VALUE"]*1000)
     # st.write(f"{round(min2*1000)} : {round(max2*1000)}")
-    geo_layer_2["obs_radius"] = geo_layer_2["OBS_VALUE"].map(lambda obs_count: math.sqrt(obs_count))
+    geo_layer_2["obs_radius"] = geo_layer_2["OBS_VALUE"].map(lambda obs_count: math.sqrt(obs_count)*ind_scale)
     # st.write(geo_layer_2.head())
 
     # Define a layer to display on a map
@@ -443,18 +457,19 @@ def app():
 
     with row3_col1:
         st.pydeck_chart(r)
+        # st.write(".")
 
 
     with row3_col2:
         st.write(
             cm.create_colormap(
-                palette,
+                palette1,
                 label="Net Migration Rate\n per 1k population", #selected_col.replace("_", " ").title(),
                 width=0.2,
                 height=3,
                 orientation="vertical",
-                vmin=min_value,
-                vmax=max_value,
+                vmin=min1,
+                vmax=max2,
                 font_size=10,
             )
         )
