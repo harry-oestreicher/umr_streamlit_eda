@@ -11,36 +11,20 @@ import streamlit as st
 import leafmap.colormaps as cm
 from leafmap.common import hex_to_rgb
 
-# Begin Streamlit
-# Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
-if 'sidebar_state' not in st.session_state:
-    st.session_state.sidebar_state = 'collapsed'
+st.set_page_config(layout="wide")
 
-# Streamlit set_page_config method has a 'initial_sidebar_state' argument that controls sidebar state.
-st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state, layout="wide")
-
-# Show title and description of the app.
-st.title("Unaccompanied Minor Research")
-st.sidebar.write("""
-**Sidebar**
-
-`This` is an example **Streamlit** app to show how to expand and collapse the sidebar programmatically.
-
-To run this example:
-
-```bash
-$ streamlit run Home.py
-```
-
-""")
-
+# STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
+# # We create a downloads directory within the streamlit static asset directory
+# # and we write output files to it
+# DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
+# if not DOWNLOADS_PATH.is_dir():
+#     DOWNLOADS_PATH.mkdir()
 
 link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
 
 data_links = {
     "reference": {
         "countries": link_prefix + "umr_eda_NMR.csv", # <== Net Migration
-        "countries_hires": link_prefix + "umr_eda_NMR.csv", # <== Net Migration
     },
     "indicator": {
         "DM_": link_prefix + "umr_data_DM_.csv",
@@ -90,13 +74,13 @@ def get_geom_data(category):
         "county": prefix + "us/us_counties.geojson",
         "metro": prefix + "us/us_metro_areas.geojson",
     }
-
     gdf = gpd.read_file(links[category])
 
     return gdf
 
 
 def join_attributes(gdf, df, category):
+
     new_gdf = None
     if category == "county":
         new_gdf = gdf.merge(df, left_on="GEOID", right_on="county_fips", how="outer")
@@ -111,36 +95,34 @@ def join_attributes(gdf, df, category):
         new_gdf = gdf.merge(df, left_on="id", right_on="REF_AREA", how="outer")
     elif category == "countries_hires":
         new_gdf = gdf.merge(df, left_on="ISO_A3", right_on="REF_AREA", how="outer")
-        new_gdf.rename(columns={'ISO_A3': 'id'}, inplace=True)
     
     new_gdf = new_gdf[~new_gdf["id"].isna()]
     new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
     return new_gdf
 
 
-def join_indicator(gdf, df, indicator):
+
+def join_indicators(gdf, df, indicator):
     new_gdf = None
     if indicator == "DM_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["id", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "ECON_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["id", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "HVA_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "MG_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "MNCH_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "PT_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "PV_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
     elif indicator == "WS_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
-        # new_gdf.rename(columns={'OBS_VALUE': f"{this_indicator}"}, inplace=True)
-        new_gdf = new_gdf[~new_gdf["id"].isna()]
-        new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
+        new_gdf = gdf.merge(df, left_on=["ISO_A3", "TIME_PERIOD"], right_on=["REF_AREA", "TIME_PERIOD"], how="outer")
 
     return new_gdf
+
 
 
 def select_non_null(gdf, col_name):
@@ -157,6 +139,7 @@ def get_indicator_dict(name):
     in_csv = os.path.join(os.getcwd(), "src/data/umr/umr_data_dict_INDICATOR.csv")
     df = pd.read_csv(in_csv)
     value = df[df.key==name]["value"].values[0]
+
     return value
 
 
@@ -165,7 +148,8 @@ def get_indicators(df):
     return indicator_list
 
 def app():
-    # st.title("Unaccompanied Minor Research")
+
+    st.title("Unaccompanied Minor Research")
     st.write(
         """
         ## Net Migration Rate (per 1000 population)
@@ -179,7 +163,7 @@ def app():
     )
 
     row1_col1, row1_col2, row1_col3  = st.columns(
-        [0.5, 0.5, 2]
+        [0.5, 0.5, 3]
     )
 
     years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
@@ -210,46 +194,41 @@ def app():
     with row1_col3:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
         # st.write(indicator_df.head(3))
-        this_ind_list = indicator_df["INDICATOR"].unique().tolist()
-        this_indicator = st.selectbox("Indicator:", this_ind_list)
-        this_indicator_text = get_indicator_dict(this_indicator)
-        # Display the indicator full text
-        st.write(this_indicator_text)
+        st.dataframe(indicator_df, height=120)
+        # ind_list = indicator_df["INDICATOR"].unique()
+        # st.write(indicator_df)
 
 
-    show_tables = "no"
-    show_tables = st.checkbox("Show Dataframes")
+    # with row1_col5:
+    # get_indicator_dict(name)
+    show_desc = "no"
+    show_desc = st.checkbox("Show indicator description")
+    if show_desc:
+        try:
+            # label, desc = get_indicator_dict(indicator.strip())
+            # markdown = f"""
+            # **{label}**: {desc}
+            # """
+            # st.markdown(markdown)
 
-    row1a_col1, row1a_col2 = st.columns([4, 4])
+            for i in indicator_df["INDICATOR"].unique():
+                st.write(f"- **{i}**: {get_indicator_dict(i)}")
+                pass
 
-    if show_tables:
-        with row1a_col1:
-            st.write("#### DM_NET_MG_RATE Layer")
-            st.write(inventory_df)
-
-        with row1a_col2:
-            indicator_data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
-            indicator_df = indicator_df[indicator_df.INDICATOR==this_indicator]
-            st.write(f"#### {this_indicator} Layer")
-            st.write(indicator_df)
-    
-
-
+        except:
+            st.warning("No description available for selected attribute")
 
     row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
         [0.6, 0.68, 0.7, 0.7, 1.5, 0.8]
     )
 
     palettes = cm.list_colormaps()
-
     with row2_col1:
         palette = st.selectbox("Color palette", palettes, index=palettes.index("Blues"))
     with row2_col2:
         n_colors = st.slider("Number of colors", min_value=2, max_value=20, value=8)
     with row2_col3:
         show_nodata = st.checkbox("Show nodata areas", value=True)
-        show_indicator = st.checkbox("Show indicator areas", value=False)
-
     with row2_col4:
         show_3d = st.checkbox("Show 3D view", value=False)
     with row2_col5:
@@ -263,20 +242,14 @@ def app():
             elev_scale = 1
 
 
-    # ############################# The JOINS
+    # First JOIN
     gdf = join_attributes(gdf, inventory_df, scale.lower())
+
+
     gdf_null = select_null(gdf, selected_col)
     gdf = select_non_null(gdf, selected_col)
     gdf = gdf.sort_values(by=selected_col, ascending=True)
 
-    gdf2 = get_geom_data(scale.lower())
-    gdf2 = join_indicator(gdf2, indicator_df, indicator)
-    gdf2_null = select_null(gdf2, selected_col)
-    gdf2 = select_non_null(gdf2, selected_col)
-    gdf2 = gdf2.sort_values(by=selected_col, ascending=True)
-
-
-    # ###################### GENERATE Coloro ranges
 
     colors = cm.get_palette(palette, n_colors)
     colors = [hex_to_rgb(c) for c in colors]
@@ -306,8 +279,6 @@ def app():
     # color_exp = f"[({selected_col}-{min_value})/({max_value}-{min_value})*255, 0, 0]"
     color_exp = f"[R, G, B]"
 
-
-    # ###################  Make Leaflet layers
     geojson = pdk.Layer(
         "GeoJsonLayer",
         gdf,
@@ -343,27 +314,9 @@ def app():
         line_width_min_pixels=1,
     )
 
-    geojson_indicator = pdk.Layer(
-        "GeoJsonLayer",
-        gdf2,
-        pickable=True,
-        opacity=0.9,
-        stroked=True,
-        filled=True,
-        extruded=show_3d,
-        wireframe=True,
-        get_elevation=f"{selected_col}",
-        elevation_scale=elev_scale,
-        # get_fill_color="color",
-        get_fill_color=color_exp,
-        get_line_color=[0, 0, 0],
-        get_line_width=2,
-        line_width_min_pixels=1,
-    )
-    
     # tooltip = {"text": "Name: {NAME}"}
-    # tooltip_value = f"<b>Value:</b> {median_listing_price}""
 
+    # tooltip_value = f"<b>Value:</b> {median_listing_price}""
     tooltip = {
         "html": "<b>Name:</b> {id}<br><b>Value:</b> {"
         + selected_col
@@ -376,9 +329,6 @@ def app():
     layers = [geojson]
     if show_nodata:
         layers.append(geojson_null)
-    
-    if show_indicator:
-        layers.append(geojson_indicator)
 
     r = pdk.Deck(
         layers=layers,
@@ -391,7 +341,6 @@ def app():
 
     with row3_col1:
         st.pydeck_chart(r)
-
     with row3_col2:
         st.write(
             cm.create_colormap(
@@ -405,8 +354,6 @@ def app():
                 font_size=10,
             )
         )
-
-    return None
 
 
 app()
