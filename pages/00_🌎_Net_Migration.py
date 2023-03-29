@@ -51,7 +51,6 @@ data_links = {
     "indicator": {
         "DM_": link_prefix + "umr_data_DM_.csv",
         "ECON_": link_prefix + "umr_data_ECON_.csv",
-        "HVA_": link_prefix + "umr_data_HVA_.csv",
         "MG_": link_prefix + "umr_data_MG_.csv",
         "MNCH_": link_prefix + "umr_data_MNCH_.csv",
         "PT_": link_prefix + "umr_data_PT_.csv",
@@ -68,15 +67,14 @@ def get_data_columns(df, category="world", frequency="annual"):
 def get_reference_data(url):
     df = pd.read_csv(url)
     df.drop(columns=["Unnamed: 0", "AGE"], inplace=True)
-    df = df[df.TIME_PERIOD>2011]
-    # url = url.lower()
+    df = df[df.TIME_PERIOD==2021]
     return df
 
 @st.cache_data
 def get_indicator_data(url):
     df = pd.read_csv(url)
     df.drop(columns=["Unnamed: 0"], inplace=True)
-    # url = url.lower()
+    df = df[df.TIME_PERIOD==2021]
     return df
 
 
@@ -130,8 +128,6 @@ def join_indicator(gdf, df, indicator):
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "ECON_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
-    elif indicator == "HVA_":
-        new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "MG_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "MNCH_":
@@ -147,7 +143,12 @@ def join_indicator(gdf, df, indicator):
         new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
 
     new_gdf = new_gdf[~new_gdf["geometry"].isna()]
-
+    # # # Create centroids projection on flat projection, then back
+    # gdf2["country_centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
+    # gdf2.drop(columns=["geometry"], inplace=True)
+    # gdf2["long"] = gdf2.country_centroids.map(lambda p: p.x)
+    # gdf2["lat"] = gdf2.country_centroids.map(lambda p: p.y)
+    
     return new_gdf
 
 
@@ -190,13 +191,14 @@ def app():
         [0.5, 0.5, 2]
     )
 
-    years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
+    # years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
 
     with row1_col1:
-        selected_year = st.selectbox("Year", years_list )
+        st.write("Year: 2021")
+        selected_year = 2021 #st.selectbox("Year", years_list )
 
     with row1_col2:
-        indicator = st.selectbox("Indicator Group", ["DM_", "ECON_", "HVA_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
+        indicator = st.selectbox("Indicator Group", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "PV_", "WS_"])
 
     # manually setting these for now
     frequency = "annual"
@@ -354,9 +356,9 @@ def app():
         elevation_scale=elev_scale,
         # get_fill_color="color",
         get_fill_color=color_exp,
-        get_line_color=[0, 0, 0],
-        get_line_width=2,
-        line_width_min_pixels=1,
+        get_line_color=None,
+        get_line_width=4,
+        line_width_min_pixels=3,
     )
 
     geojson_null = pdk.Layer(
@@ -380,18 +382,18 @@ def app():
         "GeoJsonLayer",
         geo_layer_2,
         pickable=True,
-        opacity=0.2,
+        opacity=0.5,
         stroked=True,
-        filled=True,
+        filled=False,
         extruded=show_3d,
         wireframe=True,
         get_elevation=f"{selected_col}",
         elevation_scale=elev_scale/2,
         # get_fill_color="color",
-        get_fill_color=color_exp,
-        get_line_color=[0, 0, 0],
-        get_line_width=2,
-        line_width_min_pixels=1,
+        get_fill_color=False,
+        get_line_color=color_exp, #[0, 0, 0],
+        get_line_width=10,
+        line_width_min_pixels=6,
     )
     
     # geojson_indicator = pdk.Layer(
