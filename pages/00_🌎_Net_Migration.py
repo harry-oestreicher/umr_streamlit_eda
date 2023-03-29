@@ -1,6 +1,7 @@
 import datetime
 import os
 import time
+import math
 import pathlib
 import requests
 import zipfile
@@ -282,16 +283,24 @@ def app():
 
     gdf2 = get_geom_data(scale.lower())
     gdf2 = join_indicator(gdf2, indicator_df, indicator)
-    # # # Create centroids projection on flat projection, then back
-    # gdf2["country_centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
-    # gdf2.drop(columns=["geometry"], inplace=True)
-    # gdf2["long"] = gdf2.country_centroids.map(lambda p: p.x)
-    # gdf2["lat"] = gdf2.country_centroids.map(lambda p: p.y)
-    # gdf2.drop(columns=["country_centroids"], inplace=True)
+
+    # # Create centroids projection on flat projection, then back
+    gdf2["centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
+    gdf2.drop(columns=["geometry"], inplace=True)
+    gdf2["long"] = round(gdf2.centroids.map(lambda p: p.x),5)
+    gdf2["lat"] = round(gdf2.centroids.map(lambda p: p.y),5)
+    # gdf2["geometry"] = "["+ gdf2['long'].astype(str) +","+ gdf2["lat"].astype(str) +"]"
+    gdf2 = gdf2.set_geometry("centroids")
+
+    gdf2.drop(columns=["REF_AREA"], inplace=True)
+    gdf2 = gdf2[["id", "name", "centroids", "TIME_PERIOD", "INDICATOR", "OBS_VALUE", "long", "lat"]]
+
+
 
     gdf2_null = select_null(gdf2, selected_col)
     gdf2 = select_non_null(gdf2, selected_col)
     gdf2 = gdf2.sort_values(by=selected_col, ascending=True)
+    gdf2 = gdf2[gdf2.INDICATOR==this_indicator]
 
     # st.write(gdf2)
 
@@ -356,9 +365,9 @@ def app():
         elevation_scale=elev_scale,
         # get_fill_color="color",
         get_fill_color=color_exp,
-        get_line_color=None,
-        get_line_width=4,
-        line_width_min_pixels=3,
+        get_line_color=[255,255,255],
+        get_line_width=10,
+        line_width_min_pixels=5,
     )
 
     geojson_null = pdk.Layer(
@@ -378,38 +387,30 @@ def app():
         line_width_min_pixels=1,
     )
 
+    # Use pandas to calculate additional data
+    # st.write(geo_layer_1)
+    geo_layer_2["OBS_VALUE"] = round(geo_layer_2["OBS_VALUE"]*1000)
+    # st.write(f"{round(min2*1000)} : {round(max2*1000)}")
+    geo_layer_2["obs_radius"] = geo_layer_2["OBS_VALUE"].map(lambda obs_count: math.sqrt(obs_count))
+    # st.write(geo_layer_2.head())
+
+    # Define a layer to display on a map
     geojson_indicator = pdk.Layer(
-        "GeoJsonLayer",
+        "ScatterplotLayer",
         geo_layer_2,
         pickable=True,
-        opacity=0.5,
+        opacity=0.1,
         stroked=True,
-        filled=False,
-        extruded=show_3d,
-        wireframe=True,
-        get_elevation=f"{selected_col}",
-        elevation_scale=elev_scale/2,
-        # get_fill_color="color",
-        get_fill_color=False,
-        get_line_color=color_exp, #[0, 0, 0],
-        get_line_width=10,
-        line_width_min_pixels=6,
+        filled=True,
+        radius_scale=100,
+        radius_min_pixels=1,
+        radius_max_pixels=500,
+        line_width_min_pixels=1,
+        get_position="[long, lat]",
+        get_radius="obs_radius",
+        get_fill_color=[255, 140, 0],
+        get_line_color=[0, 0, 0],
     )
-    
-    # geojson_indicator = pdk.Layer(
-    #     'HexagonLayer',  # `type` positional argument is here
-    #     geo_layer_2,
-    #     get_position=['long', 'lat'],
-    #     auto_highlight=True,
-    #     elevation_scale=50,
-    #     pickable=True,
-    #     elevation_range=[0, 3000],
-    #     extruded=True,
-    #     coverage=1)
-
-
-
-
 
     # tooltip = {"text": "Name: {NAME}"}
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
@@ -442,32 +443,22 @@ def app():
 
     with row3_col1:
         st.pydeck_chart(r)
-        st.write(
-            cm.create_colormap(
-                palette1,
-                label="Net Migration Rate per 1k population", #selected_col.replace("_", " ").title(),
-                height=0.1,
-                vmin=min1,
-                vmax=max1,
-                font_size=5,
-            )
-        )
+
 
     with row3_col2:
         st.write(
             cm.create_colormap(
-                palette2,
-                label=f"{this_indicator_text}", #selected_col.replace("_", " ").title(),
-                width=0.05,
-                height=2.5,
+                palette,
+                label="Net Migration Rate\n per 1k population", #selected_col.replace("_", " ").title(),
+                width=0.2,
+                height=3,
                 orientation="vertical",
-                vmin=min1,
-                vmax=max1,
-                font_size=5,
+                vmin=min_value,
+                vmax=max_value,
+                font_size=10,
             )
         )
 
     return None
-
 
 app()
