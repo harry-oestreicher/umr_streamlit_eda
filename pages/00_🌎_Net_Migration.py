@@ -36,13 +36,11 @@ st.title("Net Migration Rate 2021")
 st.sidebar.write("""
 **Sidebar**
 
-`This` is an example **Streamlit** app to show how to expand and collapse the sidebar programmatically.
+`pydeck` is used to manage layers and enumeration in some cases.
 
-To run this example:
+Use the filter dropdowns to alter your results.
 
-```bash
-$ streamlit run Home.py
-```
+Use the checkbox to preview data before map rendering.
 
 """)
 
@@ -208,7 +206,7 @@ def app():
     )
 
     row1_col1, row1_col2, row1_col3  = st.columns(
-        [1,1,4.5]
+        [1,1,6]
     )
 
     # years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
@@ -267,8 +265,8 @@ def app():
             st.write(indicator_df)
 
 
-    row2_col1, row2_col2, row2_col3, row2_col4, row2_col5, row2_col6 = st.columns(
-        [1, 1, 1, 1, 2, 0.5]
+    row2_col1, row2_col2, row2_col3, row2_col4 = st.columns(
+        [1, 1, 1, 5]
     )
 
     palettes = cm.list_colormaps()
@@ -299,11 +297,11 @@ def app():
     with row2_col4:
         show_chloro = st.checkbox("Show **Net Migration** Chloropleth", value=True)
         show_nodata = st.checkbox("Show nodata", value=False)
-        show_labels = st.checkbox("Show Labels", value=False)
+        show_labels = st.checkbox("Show Heatmap", value=False)
         # heat_scale = st.slider("Heat scale:", min_value=1, max_value=20, value=4)
 
-    with row2_col5:
-        st.write(".")
+    # with row2_col5:
+    #     st.write(".")
 
 
 
@@ -379,9 +377,9 @@ def app():
     color_exp = f"[R, G, B]"
 
     initial_view_state = pdk.ViewState(
-        latitude=40,
-        longitude=-0,
-        zoom=1,
+        latitude=10,
+        longitude=0,
+        zoom=2,
         max_zoom=9,
         pitch=0,
         bearing=0,
@@ -514,12 +512,12 @@ def app():
     r = pdk.Deck(
         layers=layers,
         initial_view_state=initial_view_state,
-        map_style="dark",
+        map_style="light",
         tooltip=tooltip1,
         # map_provider=None,
     )
 
-    row3_col1, row3_col2 = st.columns([6, 1])
+    row3_col1, row3_col2 = st.columns([7, 1])
 
 
     with row3_col1:

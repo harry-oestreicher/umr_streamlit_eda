@@ -4,7 +4,7 @@
 
 ## Overview 
 
-This MVP explores the risk factors related to underage migrant youths.
+This MVP is an exploratory data analysis tool to examine the risk factors related to underage migrant youths.
 
 ![GIS EDA](src/images/umr_streamlit_eda1.png "screenshot")
 
