@@ -51,7 +51,7 @@ link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/
 
 data_links = {
     "reference": {
-        "countries": link_prefix + "data_for_streamlit.csv", # <== Net Migration
+        "countries": link_prefix + "umr_eda_NMR.csv", # <== Net Migration
         "countries_hires": link_prefix + "umr_eda_NMR.csv", # <== Net Migration
     },
     "indicator": {
@@ -72,7 +72,7 @@ def get_data_columns(df, category="world", frequency="annual"):
 @st.cache_data
 def get_reference_data(url):
     df = pd.read_csv(url)
-    df.drop(columns=["Unnamed: 0", "AGE"], inplace=True)
+    df.drop(columns=["Unnamed: 0"], inplace=True)
     df = df[df.TIME_PERIOD>2011]
     return df
 
