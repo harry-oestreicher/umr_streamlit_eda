@@ -12,6 +12,7 @@ import geopandas as gpd
 import streamlit as st
 import leafmap.colormaps as cm
 from leafmap.common import hex_to_rgb
+from pydeck.types import String
 
 sys.path.append("..")
 from src.data.dictionary import get_dictionary
@@ -292,10 +293,14 @@ def app():
     with row2_col3:
         # show_nodata = st.checkbox("Show nodata areas", value=True)
         st.write("**Risk Factor:**")
-        show_indicator = st.checkbox("Show Points", value=True)
+        show_indicator = st.checkbox("Show Points", value=False)
+        ind_scale = st.slider("Scale:", min_value=1, max_value=20, value=4)
 
     with row2_col4:
-        ind_scale = st.slider("Scale:", min_value=1, max_value=20, value=4)
+        show_chloro = st.checkbox("Show **Net Migration** Chloropleth", value=True)
+        show_nodata = st.checkbox("Show nodata", value=False)
+        show_labels = st.checkbox("Show Labels", value=False)
+        # heat_scale = st.slider("Heat scale:", min_value=1, max_value=20, value=4)
 
     with row2_col5:
         st.write(".")
@@ -367,6 +372,8 @@ def app():
     # min_ind_value = gdf2[selected_col].min()
     # max_ind_value = gdf2[selected_col].max()
 
+    # st.write(geo_layer_2.head())
+
     color = "color"
     # color_exp = f"[({selected_col}-{min_value})/({max_value}-{min_value})*255, 0, 0]"
     color_exp = f"[R, G, B]"
@@ -374,20 +381,21 @@ def app():
     initial_view_state = pdk.ViewState(
         latitude=40,
         longitude=-0,
-        zoom=2,
-        max_zoom=16,
+        zoom=1,
+        max_zoom=9,
         pitch=0,
         bearing=0,
         height=900,
         width=None,
     )
 
-    # ###################  Make Leaflet layers
+    ####################  pydeck layers
+
     geojson = pdk.Layer(
         "GeoJsonLayer",
         geo_layer_1,
         pickable=True,
-        opacity=0.6,
+        opacity=0.2,
         stroked=True,
         filled=True,
         extruded=show_3d,
@@ -398,7 +406,7 @@ def app():
         get_fill_color=color_exp,
         get_line_color=[255,255,255],
         get_line_width=10,
-        line_width_min_pixels=5,
+        line_width_min_pixels=2,
     )
 
     geojson_null = pdk.Layer(
@@ -412,10 +420,10 @@ def app():
         wireframe=True,
         # get_elevation="properties.ALAND/100000",
         # get_fill_color="color",
-        get_fill_color=[200, 200, 200],
+        get_fill_color=[0, 0, 0],
         get_line_color=[0, 0, 0],
-        get_line_width=2,
-        line_width_min_pixels=1,
+        get_line_width=10,
+        line_width_min_pixels=2,
     )
 
     # Use pandas to calculate additional data
@@ -430,7 +438,7 @@ def app():
         "ScatterplotLayer",
         geo_layer_2,
         pickable=True,
-        opacity=0.1,
+        opacity=0.05,
         stroked=True,
         filled=True,
         radius_scale=100,
@@ -439,9 +447,41 @@ def app():
         line_width_min_pixels=1,
         get_position="[long, lat]",
         get_radius="obs_radius",
-        get_fill_color=[255, 140, 0],
+        get_fill_color=[255, 240, 0],
         get_line_color=[0, 0, 0],
     )
+
+
+    labels_layer = pdk.Layer(
+        "HeatmapLayer",
+        geo_layer_2,
+        opacity=0.9,
+        get_position=["long", "lat"],
+        aggregation=String('MEAN'),
+        # get_weight=f"OBS_VALUE > 0 ? OBS_VALUE - {min2} : 0")
+        get_weight="OBS_VALUE > 0 ? OBS_VALUE : 0")
+
+
+
+    # DATA_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+
+
+    # labels_layer = pdk.Layer(
+    #     "LabeledGeoJsonLayer",
+    #     data=geo_layer_2,
+    #     filled=False,
+    #     billboard=False,
+    #     get_line_color=[180, 180, 180],
+    #     get_label="properties.name",
+    #     get_label_size=200000,
+    #     get_label_color=[0, 255, 255],
+    #     label_size_units=pdk.types.String("meters"),
+    #     line_width_min_pixels=1,
+    # )
+
+    # view_state = pydeck.ViewState(latitude=0, longitude=0, zoom=1)
+
+    # r = pydeck.Deck(custom_layer, initial_view_state=view_state, map_provider=None)
 
     # tooltip = {"text": "Name: {NAME}"}
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
@@ -455,18 +495,28 @@ def app():
         "style": {"backgroundColor": "beige", "color": "black"},
     }
 
-    layers = [geojson]
-    # if show_nodata:
-    #     layers.append(geojson_null)
+    layers = []
+    
+    if show_chloro:
+        layers.append(geojson)
+
+    if show_nodata:
+        layers.append(geojson_null)
     
     if show_indicator:
         layers.append(geojson_indicator)
 
+    if show_labels:
+        layers.append(labels_layer)
+
+
+
     r = pdk.Deck(
         layers=layers,
         initial_view_state=initial_view_state,
-        map_style="light",
+        map_style="dark",
         tooltip=tooltip1,
+        # map_provider=None,
     )
 
     row3_col1, row3_col2 = st.columns([6, 1])
@@ -481,13 +531,13 @@ def app():
         st.write(
             cm.create_colormap(
                 palette1,
-                label="Net Migration Rate\n per 1k population", #selected_col.replace("_", " ").title(),
-                width=0.2,
+                label="Net Migration Rate (per 1000 population)", #selected_col.replace("_", " ").title(),
+                width=0.05,
                 height=3,
                 orientation="vertical",
                 vmin=min1,
                 vmax=max2,
-                font_size=10,
+                font_size=7,
             )
         )
 
