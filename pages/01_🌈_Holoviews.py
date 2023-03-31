@@ -21,7 +21,7 @@ from holoviews import opts
 hv.extension('bokeh')
 
 sys.path.append("..")
-from src.data.dictionary import get_dictionary
+from data.dictionary import get_dictionary
 INDICATOR_dict = get_dictionary('INDICATOR')
 
 # # load the world dataset
@@ -89,7 +89,7 @@ def get_indicator_data(url):
     return df
 
 def get_indicator_dict(name):
-    in_csv = os.path.join(os.getcwd(), "src/data/umr/umr_data_dict_INDICATOR.csv")
+    in_csv = os.path.join(os.getcwd(), "data/umr_data_dict_INDICATOR.csv")
     df = pd.read_csv(in_csv)
     value = df[df.key==name]["value"].values[0]
     return value

@@ -11,15 +11,15 @@ from pathlib import Path
 import src.utils.streamlit_gui as utl
 from PIL import Image
 
-from src.utils.dataio import init_data, get_data
+# from src.utils.dataio import init_data, get_data
 import streamlit.components.v1 as components
-from web3 import Web3
-from dotenv import load_dotenv
+# from web3 import Web3
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
-contract_address = os.getenv("SMART_CONTRACT_ADDRESS")
-contract_abi = os.getenv("ABI_PATH")
+# contract_address = os.getenv("SMART_CONTRACT_ADDRESS")
+# contract_abi = os.getenv("ABI_PATH")
 
 # Begin Streamlit
 # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
@@ -33,7 +33,7 @@ st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state, layout=
 # st.title('Example: Controlling sidebar programmatically')
 st.sidebar.markdown('Several open-source packages are used to process the data and generate the visualizations, e.g., streamlit, geopandas, leafmap, and pydeck.')
 
-def main(df):
+def main():
 
     dir_root = os.path.dirname(os.path.abspath(__file__))
     utl.set_page_title('UMR Exploratory Data Analysis')
@@ -46,11 +46,7 @@ def main(df):
     st.title("Unaccompanied Minor Research", anchor=None)
     st.write("### Exploratory Data Analysis")
     st.write("""This MVP explores the risk factors related to underage migrant youths.""")
-    # st.markdown("**Settings:**")
-    # st.write(f"Contract Address: {contract_address}")
-    # st.write(f"Contract ABI: {contract_abi}")
-    # st.markdown("---")
-    # st.image("https://www.bbva.com/wp-content/uploads/en/2017/07/blockchain-humanitario.jpg", width=600)
+    st.markdown("---")
     return
 
     # ## Sidebar voodoo
@@ -68,14 +64,14 @@ def main(df):
 
     # st.image("https://www.bbva.com/wp-content/uploads/en/2017/07/blockchain-humanitario.jpg", width=600)
 
-# @st.cache
-def load_data():
-    # This is a compulory query that is available on each page to build out the solution with additional functionality.
-    query_str = "SELECT * FROM ASSETS;"
-    df = get_data(query_str)
-    return df
+# # @st.cache
+# def load_data():
+#     # This is a compulory query that is available on each page to build out the solution with additional functionality.
+#     query_str = "SELECT * FROM ASSETS;"
+#     df = get_data(query_str)
+#     return df
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.CRITICAL)
-    df = load_data()
-    main(df)
+    # df = load_data()
+    main()
