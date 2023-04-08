@@ -38,9 +38,9 @@ def main():
     dir_root = os.path.dirname(os.path.abspath(__file__))
     utl.set_page_title('UMR Exploratory Data Analysis')
     st.set_option('deprecation.showPyplotGlobalUse', False)
-    utl.local_css("frontend/css/streamlit.css")
+    utl.local_css("src/css/streamlit.css")
     utl.remote_css("https://fonts.googleapis.com/icon?family=Material+Icons")
-    # logo = Image.open(f"{dir_root}/frontend/feral.jpg")
+    # logo = Image.open(f"{dir_root}/src/images/erth.png")
 
     # Page Header information
     st.title("Unaccompanied Minor Research", anchor=None)
@@ -49,7 +49,7 @@ def main():
     st.markdown("---")
     return
 
-    # ## Sidebar voodoo
+    # ## Sidebar 
     # if st.session_state.sidebar_state == 'collapsed':
     #     print(style_on)
     # else:
