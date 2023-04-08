@@ -8,6 +8,21 @@ This MVP is an exploratory data analysis tool to examine the risk factors relate
 
 ![GIS EDA](src/images/umr_streamlit_eda1.png "screenshot")
 
+---
+
+    MNCH data notes:
+
+    Some important indicators are collected by regions instead of countries.  So we'll write some code to address these.
+
+    - UNFPA_AP : Asia Pacific
+    - UNFPA_EECA : Eastern Europe and Central Asia
+    - UNFPA_ESA : Eastern and Southern Africa
+    - UNFPA_LAC : Latin America and Carribean
+    - UNFPA_WCA : Western and Central Africa
+    - UNICEF_ECARO : Europe and Central Asia Region
+    - UNICEF_EECA : Eastern Europe and Central Asia
+
+
 
 ## Getting Started & Running the Code
 

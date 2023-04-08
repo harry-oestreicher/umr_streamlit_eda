@@ -79,6 +79,8 @@ def get_indicator_data(url):
     df = pd.read_csv(url)
     df.drop(columns=["Unnamed: 0"], inplace=True)
     df = df[df.TIME_PERIOD==2021]
+    df.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
+
     return df
 
 
@@ -209,18 +211,62 @@ def app():
         [1,1,6]
     )
 
-    # years_list = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
+    # Associate these group labels with thier file prefixes:
+    indicator_group_dict = {
+            "Demographic": "DM_",
+            "Economic": "ECON_",
+            "Migratory": "MG_",
+            "Maternal, Newborn, and Child Health": "MNCH_",
+            "Post-Trauma": "PT_",
+            "Water Services": "WS_"
+    }
 
+    org_dict = {
+        "UNSDG": "United Nations Sustainable Development Group",
+        "UNFPA": "United Nations Population Fund Agency",
+        "UNICEF": "United Nations International Children's Emergency Fund"
+    }
+
+    world_region_dict = {
+        "UNFPA_AP": "Asia Pacific",
+        "UNFPA_EECA": "Eastern Europe and Central Asia",
+        "UNFPA_ESA": "Eastern and Southern Africa",
+        "UNFPA_LAC": "Latin America and Carribean",
+        "UNFPA_WCA": "Western and Central Africa",
+        "UNICEF_ECARO": "Europe and Central Asia Region",
+        "UNICEF_EECA": "Eastern Europe and Central Asia",
+        "UNSDG_CARIBBEAN": "NAME",
+        "UNSDG_CENTRALAMR": "NAME",
+        "UNSDG_CENTRALASIASOUTHERNASIA": "NAME",
+        "UNSDG_EASTERNAFR": "NAME",
+        "UNSDG_LDC": "NAME",
+        "UNSDG_LLDC": "NAME",
+        "UNSDG_MIDDLEAFR": "NAME",
+        "UNSDG_SIDS": "NAME",
+        "UNSDG_SOUTHASIA": "NAME",
+        "UNSDG_SOUTHEASTERNASIA": "NAME",
+        "UNSDG_SOUTHERNAFR": "NAME",
+        "UNSDG_SUBSAHARANAFRICA": "NAME",
+        "UNSDG_WESTERNAFR": "NAME"
+
+    }
+
+    # Reserved globals for later development
+    frequency = "annual"
+    scale = "countries"
+
+
+    #########################################################  Begin filter
     with row1_col1:
         st.write("**Year: 2021**")
         selected_year = 2021 #st.selectbox("Year", years_list )
 
     with row1_col2:
-        indicator = st.selectbox("**Risk Factor Group**", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "WS_"])
-
-    # manually setting these for now
-    frequency = "annual"
-    scale = "countries"
+        # indicator_group = st.selectbox("**Risk Factor Group**", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "WS_"])
+        indicator_group_selected = st.selectbox("**Indictator Group**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health", "Post-Trauma", "Water Services"])
+        indicator_group = indicator_group_dict[indicator_group_selected]
+        
+    # Get geometry data
     gdf = get_geom_data(scale.lower())
 
     # Get Net Migration Data
@@ -232,20 +278,24 @@ def app():
     # Calculate columns
     data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
 
-    indicator_df = get_indicator_data(data_links["indicator"][indicator])
+    # Get Indicator Group data
+    indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
+
     #########################################
-    indicator_df = indicator_df[indicator_df.INDICATOR!="DM_NET_MG_RATE"]
+    indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
     indicator_df = indicator_df[indicator_df.TIME_PERIOD==selected_year]
 
     with row1_col3:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
         # st.write(indicator_df.head(3))
+
         this_ind_list = indicator_df["INDICATOR"].unique().tolist()
-        this_indicator = st.selectbox("**Risk Factor:**", this_ind_list)
-        this_indicator_text = get_indicator_dict(this_indicator)
+        this_indicator = st.selectbox(f"**{indicator_group_selected} Indicators**", this_ind_list)
+        # this_indicator_text = get_indicator_dict(this_indicator)
+
         # Display the indicator full text
-        st.write(this_indicator_text)
-        # st.write(indicator_df["OBS_VALUE"].dtype)
+        # st.write(this_indicator_text)
+
 
 
     show_tables = "no"
@@ -280,10 +330,9 @@ def app():
         show_3d = st.checkbox("Show 3D view", value=False)
         if show_3d:
             elev_scale = st.slider(
-                "Elevation scale", min_value=1, max_value=1000, value=1, step=10
+                "Elevation scale", min_value=1, max_value=100000, value=1, step=10
             )
-            with row2_col6:
-                st.info("Press Ctrl and move the left mouse button.")
+            st.info("Press Ctrl and move the left mouse button.")
         else:
             elev_scale = 1
         
@@ -292,7 +341,7 @@ def app():
         # show_nodata = st.checkbox("Show nodata areas", value=True)
         st.write("**Risk Factor:**")
         show_indicator = st.checkbox("Show Points", value=False)
-        ind_scale = st.slider("Scale:", min_value=1, max_value=20, value=4)
+        ind_scale = st.slider("Scale:", min_value=1, max_value=1000, value=1)
 
     with row2_col4:
         show_chloro = st.checkbox("Show **Net Migration** Chloropleth", value=True)
@@ -315,7 +364,7 @@ def app():
     gdf = gdf.sort_values(by=selected_col, ascending=True)
 
     gdf2 = get_geom_data(scale.lower())
-    gdf2 = join_indicator(gdf2, indicator_df, indicator)
+    gdf2 = join_indicator(gdf2, indicator_df, indicator_group)
 
     # # Create centroids projection on flat projection, then back
     gdf2["centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
@@ -426,7 +475,9 @@ def app():
 
     # Use pandas to calculate additional data
     # st.write(geo_layer_1)
-    geo_layer_2["OBS_VALUE"] = round(geo_layer_2["OBS_VALUE"]*1000)
+
+    # geo_layer_2["OBS_VALUE"] = round(geo_layer_2["OBS_VALUE"]*1000)
+
     # st.write(f"{round(min2*1000)} : {round(max2*1000)}")
     geo_layer_2["obs_radius"] = geo_layer_2["OBS_VALUE"].map(lambda obs_count: math.sqrt(obs_count)*ind_scale)
     # st.write(geo_layer_2.head())
@@ -440,7 +491,7 @@ def app():
         stroked=True,
         filled=True,
         radius_scale=100,
-        radius_min_pixels=1,
+        radius_min_pixels=5,
         radius_max_pixels=500,
         line_width_min_pixels=1,
         get_position="[long, lat]",
@@ -457,7 +508,9 @@ def app():
         get_position=["long", "lat"],
         aggregation=String('MEAN'),
         # get_weight=f"OBS_VALUE > 0 ? OBS_VALUE - {min2} : 0")
-        get_weight="OBS_VALUE > 0 ? OBS_VALUE : 0")
+        get_weight="OBS_VALUE > 0 ? OBS_VALUE : 0",
+        # radius= 1000
+        )
 
 
 
@@ -534,7 +587,7 @@ def app():
                 height=3,
                 orientation="vertical",
                 vmin=min1,
-                vmax=max2,
+                vmax=max1,
                 font_size=7,
             )
         )

@@ -176,10 +176,11 @@ def app():
 
 
     top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
-    nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="DM_NET_MG_RATE"].hvplot.box( y="OBS_VALUE", by="REF_AREA", legend=False, rot=45, width=900, height=500)
+    nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="DM_NET_MG_RATE"].hvplot.box( y="OBS_VALUE", by="REF_AREA", legend=False, rot=45, width=500, height=500)
     nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.line(
-        x="REF_AREA", y="OBS_VALUE", by="TIME_PERIOD", legend_position='top_left', rot=45, width=900, height=500)
-    st.write(hv.render(nice_plot1*nice_plot2, backend='bokeh'))
+        x="REF_AREA", y="OBS_VALUE", by="TIME_PERIOD", legend_position='top_left', rot=45, width=500, height=500)
+    st.write(hv.render(nice_plot1, backend='bokeh'))
+    # st.write(hv.render(nice_plot2, backend='bokeh'))
 
     # row2_col1, row2_col2 = st.columns([4, 4])
     # with row2_col1:
