@@ -76,36 +76,11 @@ data_links = {
     },
 }
 
-# def get_data_columns(df, category="world", frequency="annual"):
-#     cols = df.columns.values.tolist()
-#     return cols[1:]
-
-# @st.cache_data
-# def get_reference_data(url):
-#     df = pd.read_csv(url)
-#     df.drop(columns=["Unnamed: 0", "AGE"], inplace=True)
-#     df = df[df.TIME_PERIOD==2021]
-#     return df
-
-# @st.cache_data
-# def get_data(url):
-#     df = pd.read_csv(url)
-#     df.drop(columns=["Unnamed: 0"], inplace=True)
-#     # df = df[df.TIME_PERIOD==2021]
-#     return df
-
 @st.cache_data
 def get_indicator_data(url):
     df = pd.read_csv(url)
-
-    # if url == "MG_":
-    #     df = df[df["OBS_VALUE"].str.contains(r"<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
-    
     df.drop(columns=["Unnamed: 0"], inplace=True)
-    # df = df[df.TIME_PERIOD==2021]
-    # df["OBS_VALUE"] = df["OBS_VALUE"].astype(str)
     pd.to_numeric(df["OBS_VALUE"])
-    # df = df[df["OBS_VALUE"].str.contains(r"<|>") == False].copy()
     df.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
     
     return df
@@ -139,10 +114,10 @@ def app():
         """
     )
 
-    # manually setting these for now
     frequency = "annual"
     scale = "countries"
-    # Associate these group labels with thier file prefixes:
+    
+    # Associate these group labels with file prefixes:
     indicator_group_dict = {
             "Demographic": "DM_",
             "Economic": "ECON_",
