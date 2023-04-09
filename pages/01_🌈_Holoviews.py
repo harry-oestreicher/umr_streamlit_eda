@@ -82,9 +82,17 @@ data_links = {
 @st.cache_data
 def get_indicator_data(url):
     df = pd.read_csv(url)
+
+    # if url == "MG_":
+    #     df = df[df["OBS_VALUE"].str.contains(r"<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
+    
     df.drop(columns=["Unnamed: 0"], inplace=True)
     # df = df[df.TIME_PERIOD==2021]
+    # df["OBS_VALUE"] = df["OBS_VALUE"].astype(str)
+    pd.to_numeric(df["OBS_VALUE"])
+    # df = df[df["OBS_VALUE"].str.contains(r"<|>") == False].copy()
     df.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
+    
     return df
 
 def get_indicator_dict(name):
@@ -146,6 +154,9 @@ def app():
     # Get Indicator Group data
     indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
     indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
+    # indicator_df = indicator_df[indicator_df["OBS_VALUE"].str.contains(r"<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
+
+
     # this_df = this_df[this_df.TIME_PERIOD==selected_year]
 
     with row1_col2:
@@ -189,14 +200,16 @@ def app():
     top_40_nmr = trim_the_fat(net_mg_rate, 5)
     top_40_nmr.sort_values(by=["REF_AREA", "OBS_VALUE"], inplace=True)
     top_40_nmr_countries = top_40_nmr["REF_AREA"].unique()
-    top_40_others = indicator_df[indicator_df["REF_AREA"].isin(top_40_nmr_countries)]               
+    top_40_others = indicator_df[indicator_df["REF_AREA"].isin(top_40_nmr_countries)]
+
     top_40_merged = pd.concat([top_40_nmr,top_40_others])
     top_40_merged.sort_values(by=["REF_AREA", "TIME_PERIOD", "INDICATOR"], inplace=True)
     ###############################################################
     
     # Enumerate columns
-    top_40_merged.replace({"REF_AREA": REF_AREA_dict}, inplace=True)
-    top_40_others.replace({"REF_AREA": REF_AREA_dict}, inplace=True)
+    net_mg_rate = net_mg_rate.replace({"REF_AREA": REF_AREA_dict}).copy()
+    top_40_merged = top_40_merged.replace({"REF_AREA": REF_AREA_dict}).copy()
+    top_40_others = top_40_others.replace({"REF_AREA": REF_AREA_dict}).copy()
 
     show_tables = "no"
     show_tables = st.checkbox("Show Dataframes")
@@ -205,21 +218,21 @@ def app():
         row1a_col1, row1a_col2 = st.columns([4, 4])
 
         with row1a_col1:
-            st.write("**All Countries (2012 - 2022)**")
+            st.write("**Top-10 NMR (2012 - 2022)**")
             st.write(top_40_nmr)
 
         with row1a_col2:
             # indicator_data_cols = get_data_columns(inventory_df, scale.lower(), frequency.lower())
             # indicator_df = indicator_df[indicator_df.INDICATOR==this_indicator]
             # st.write(f"#### {this_indicator} Layer")
-            st.write("**Top-10 NMR Countries (2012 - 2022)**")
+            st.write("**Top-10 NMR All Indicators (2012 - 2022)**")
             st.write(top_40_others)
 
 
     top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
     nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="DM_NET_MG_RATE"].hvplot.box( y="OBS_VALUE", by="REF_AREA", legend=False, rot=45, width=500, height=500)
-    nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.line(
-        x="REF_AREA", y="OBS_VALUE", by="TIME_PERIOD", legend_position='top_left', rot=45)
+    nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.box(
+        y="OBS_VALUE", by="REF_AREA", rot=45)
     st.write(hv.render(nice_plot2, backend='bokeh'))
     # st.write(hv.render(nice_plot2, backend='bokeh'))
 
