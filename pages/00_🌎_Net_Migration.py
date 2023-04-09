@@ -11,6 +11,7 @@ import pydeck as pdk
 import geopandas as gpd
 import streamlit as st
 import leafmap.colormaps as cm
+import streamlit_toggle as tog
 from leafmap.common import hex_to_rgb
 from pydeck.types import String
 
@@ -33,10 +34,18 @@ st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state, layout=
 
 # Show title and description of the app.
 st.title("Net Migration Rate 2021")
+
+Toggle = tog.st_toggle_switch(label="fetch data from cloud", 
+                    key=True, 
+                    default_value=False, 
+                    label_after = False, 
+                    inactive_color = '#D3D3D3', 
+                    active_color="#11567f", 
+                    track_color="#29B5E8"
+                    )
+
 st.sidebar.write("""
 **Sidebar**
-
-`pydeck` is used to manage layers and enumeration in some cases.
 
 Use the filter dropdowns to alter your results.
 
@@ -44,8 +53,10 @@ Use the checkbox to preview data before map rendering.
 
 """)
 
-
-link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
+if Toggle == True:
+    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
+else:
+    link_prefix = "data/"
 
 data_links = {
     "reference": {
@@ -207,10 +218,6 @@ def app():
         """
     )
 
-    row1_col1, row1_col2, row1_col3  = st.columns(
-        [1,1,6]
-    )
-
     # Associate these group labels with thier file prefixes:
     indicator_group_dict = {
             "Demographic": "DM_",
@@ -254,14 +261,17 @@ def app():
     # Reserved globals for later development
     frequency = "annual"
     scale = "countries"
+    selected_year = 2021
 
+    # with row1_col1:
+    #     st.write("**Year: 2021**")
+    #     selected_year = 2021 #st.selectbox("Year", years_list )
 
-    #########################################################  Begin filter
+    row1_col1, row1_col2  = st.columns(
+        [4, 6]
+    )
+
     with row1_col1:
-        st.write("**Year: 2021**")
-        selected_year = 2021 #st.selectbox("Year", years_list )
-
-    with row1_col2:
         # indicator_group = st.selectbox("**Risk Factor Group**", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "WS_"])
         indicator_group_selected = st.selectbox("**Indictator Group**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health", "Post-Trauma", "Water Services"])
         indicator_group = indicator_group_dict[indicator_group_selected]
@@ -285,7 +295,7 @@ def app():
     indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
     indicator_df = indicator_df[indicator_df.TIME_PERIOD==selected_year]
 
-    with row1_col3:
+    with row1_col2:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
         # st.write(indicator_df.head(3))
 
@@ -301,7 +311,7 @@ def app():
     show_tables = "no"
     show_tables = st.checkbox("Show Dataframes")
 
-    row1a_col1, row1a_col2 = st.columns([4, 4])
+    row1a_col1, row1a_col2 = st.columns([5, 5])
 
     if show_tables:
         with row1a_col1:
@@ -316,7 +326,7 @@ def app():
 
 
     row2_col1, row2_col2, row2_col3, row2_col4 = st.columns(
-        [1, 1, 1, 5]
+        [2, 2, 2, 4]
     )
 
     palettes = cm.list_colormaps()
@@ -570,7 +580,7 @@ def app():
         # map_provider=None,
     )
 
-    row3_col1, row3_col2 = st.columns([7, 1])
+    row3_col1, row3_col2 = st.columns([9, 1])
 
 
     with row3_col1:
