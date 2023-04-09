@@ -31,16 +31,6 @@ st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state, layout=
 
 # Show title and description of the app.
 st.title("Net Migration Rate")
-
-Toggle = tog.st_toggle_switch(label="fetch data from cloud", 
-                    key=True, 
-                    default_value=False, 
-                    label_after = False, 
-                    inactive_color = '#D3D3D3', 
-                    active_color="#11567f", 
-                    track_color="#29B5E8"
-                    )
-
 st.sidebar.write("""
 **Sidebar**
 
@@ -49,6 +39,16 @@ Use the filter dropdowns to alter your results.
 Use the checkbox to preview dataframes before rendering any visualzations.
 
 """)
+
+with st.sidebar:
+    Toggle = tog.st_toggle_switch(label="fetch data from cloud", 
+                key=True, 
+                default_value=False, 
+                label_after = False, 
+                inactive_color = '#D3D3D3', 
+                active_color="#11567f", 
+                track_color="#29B5E8"
+                )
 
 if Toggle == True:
     link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
