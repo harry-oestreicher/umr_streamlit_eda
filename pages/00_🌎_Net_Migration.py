@@ -18,6 +18,7 @@ from pydeck.types import String
 sys.path.append("..")
 from data.dictionary import get_dictionary
 INDICATOR_dict = get_dictionary('INDICATOR')
+REF_AREA_dict = get_dictionary('REF_AREA')
 
 # load the world dataset
 world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
@@ -515,12 +516,9 @@ def app():
         geo_layer_2,
         opacity=0.9,
         get_position=["long", "lat"],
-        aggregation=String('MEAN'),
-        # get_weight=f"OBS_VALUE > 0 ? OBS_VALUE - {min2} : 0")
+        aggregation=String('SUM'),
         get_weight="OBS_VALUE > 0 ? OBS_VALUE : 0",
-        # radius= 1000
-        )
-
+    )
 
 
     # DATA_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
@@ -547,9 +545,9 @@ def app():
     # tooltip_value = f"<b>Value:</b> {median_listing_price}""
 
     tooltip1 = {
-        "html": "<b>Name:</b>{name}<br><b>{INDICATOR}:</b> {"
+        "html": "<strong>Country:</strong> {name}<br><strong>Indicator:</strong>{INDICATOR}<br/><strong>Value: </strong>{"
         + selected_col
-        + "}<br><b>Year:</b> "
+        + "} <br/><strong>Year: </strong> "
         + str(selected_year)
         + "",
         "style": {"backgroundColor": "beige", "color": "black"},
