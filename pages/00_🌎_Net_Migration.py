@@ -351,7 +351,7 @@ def app():
         # show_nodata = st.checkbox("Show nodata areas", value=True)
         st.write("**Risk Factor:**")
         show_indicator = st.checkbox("Show Points", value=False)
-        ind_scale = st.slider("Scale:", min_value=1, max_value=1000, value=1)
+        ind_scale = st.slider("Scale:", min_value=1, max_value=700, value=1)
 
     with row2_col4:
         show_chloro = st.checkbox("Show **Net Migration** Chloropleth", value=True)
