@@ -158,6 +158,7 @@ def app():
     row1_col1, row1_col2, row1_col3  = st.columns([1, 4, 4])
 
     with row1_col1:
+        year_selected =  st.selectbox("**Year**", [2019, 2020, 2021, 2022])
         num_extremes = st.slider("Hi/Low NMR Countries:", min_value=2, max_value=40, value=2)
         # print(num_extremes)
 
@@ -184,6 +185,7 @@ def app():
 
 
     net_mg_rate = df[df.INDICATOR=='Net migration rate (per 1,000 population)'].sort_values('OBS_VALUE').copy()
+    net_mg_rate = net_mg_rate[net_mg_rate.TIME_PERIOD==year_selected].copy()
 
     def trim_the_fat(df, num):
         upp = df.sort_values('OBS_VALUE').head(num)
@@ -228,16 +230,5 @@ def app():
     nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
     st.write("### Top NMR Countries Indicator Comparison")
     st.write(hv.render(nice_plot1*nice_plot2, backend='bokeh'))
-
-    # row2_col1, row2_col2 = st.columns([4, 4])
-    # with row2_col1:
-    #     top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
-    #     nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="DM_NET_MG_RATE"].hvplot.box( y="OBS_VALUE", by="REF_AREA", rot=55, width=900, height=500)
-    #     # st.write(hv.render(nice_plot1, backend='bokeh'))
-
-    # with row2_col2:
-    #     nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.line(x="REF_AREA", y="OBS_VALUE", by="TIME_PERIOD", rot=55, width=900, height=500)
-    #     st.write(hv.render(nice_plot1*nice_plot2, backend='bokeh'))
-
 
 app()
