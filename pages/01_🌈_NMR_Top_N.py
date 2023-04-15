@@ -152,40 +152,48 @@ def app():
             "Water Services": "WS_"
     }
 
-    # Lets fix how we're getting this data. We change to getttiign by group to make the UI more understandable.
-    df = get_indicator_data(data_links["indicator"]["_ALL_"])
+    row0_col0, row0_col1, row0_col2  = st.columns([2,1,4])
 
-    row1_col1, row1_col2, row1_col3  = st.columns([1, 4, 4])
+    with row0_col0:
+        num_extremes = st.slider("Number of Extreme (Hi/Low) NMR Countries to include in analysis:", min_value=2, max_value=40, value=10)
+
+    with row0_col1:
+        all_year_toggle = tog.st_toggle_switch(label="Show All NMR Years?", 
+                    key='all_years', 
+                    default_value=False, 
+                    label_after = True, 
+                    inactive_color = '#D3D3D3', 
+                    active_color="#11567f", 
+                    track_color="#29B5E8"
+                    )
+   
+    with row0_col2:
+        yrs = range(2012,2022+1)
+        if all_year_toggle != True:
+            year_selected =  st.selectbox("**Select NMR year:**", yrs)
+        else:
+            year_selected =  st.selectbox("**Select NMR year:**", yrs, disabled=True)
+
+    st.write("---")
+
+    df = get_indicator_data(data_links["indicator"]["_ALL_"])
+    row1_col1, row1_col2, = st.columns([4, 4])
 
     with row1_col1:
-        year_selected =  st.selectbox("**Year**", [2019, 2020, 2021, 2022])
-        num_extremes = st.slider("Hi/Low NMR Countries:", min_value=2, max_value=40, value=2)
-        # print(num_extremes)
-
-    with row1_col2:
-        # indicator_group = st.selectbox("**Risk Factor Group**", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "WS_"])
-        indicator_group_selected = st.selectbox("**Indictator Group**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health", "Water Services"])
+        indicator_group_selected = st.selectbox("**Indictator Group:**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health", "Water Services"])
         indicator_group = indicator_group_dict[indicator_group_selected]      
- 
- 
-    # Get Indicator Group data
+  
     indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
     indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
 
-    with row1_col3:
-        # selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
-        # st.write(indicator_df.head(3))
-
+    with row1_col2:
         this_ind_list = indicator_df["INDICATOR"].unique().tolist()
-        this_indicator = st.selectbox(f"**{indicator_group_selected} Indicators**", this_ind_list)
-        # this_indicator_text = get_indicator_dict(this_indicator)
-
-        # Display the indicator full text
-        # st.write(this_indicator_text)
-
+        this_indicator = st.selectbox(f"**{indicator_group_selected}** Indicators:", this_ind_list)
 
     net_mg_rate = df[df.INDICATOR=='Net migration rate (per 1,000 population)'].sort_values('OBS_VALUE').copy()
-    net_mg_rate = net_mg_rate[net_mg_rate.TIME_PERIOD==year_selected].copy()
+
+    if all_year_toggle != True:
+        net_mg_rate = net_mg_rate[net_mg_rate.TIME_PERIOD==year_selected].copy()
 
     def trim_the_fat(df, num):
         upp = df.sort_values('OBS_VALUE').head(num)
@@ -202,7 +210,7 @@ def app():
     top_40_merged = pd.concat([top_40_nmr,top_40_others])
     top_40_merged.sort_values(by=["REF_AREA", "TIME_PERIOD", "INDICATOR"], inplace=True)
     
-    # Enumerate columns
+    # Enumerate REF_AREA in all of teh dataframes
     net_mg_rate = net_mg_rate.replace({"REF_AREA": REF_AREA_dict}).copy()
     top_40_nmr = top_40_nmr.replace({"REF_AREA": REF_AREA_dict}).copy()
     top_40_merged = top_40_merged.replace({"REF_AREA": REF_AREA_dict}).copy()
@@ -228,7 +236,7 @@ def app():
     # "Net migration rate (per 1,000 population)" | "DM_NET_MG_RATE"
     nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].hvplot.line( y="OBS_VALUE", x="REF_AREA", legend=False, rot=45, width=1000, height=500)
     nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
-    st.write("### Top NMR Countries Indicator Comparison")
+    # st.write("### Top NMR Countries Indicator Comparison")
     st.write(hv.render(nice_plot1*nice_plot2, backend='bokeh'))
 
 app()
