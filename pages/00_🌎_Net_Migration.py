@@ -65,7 +65,7 @@ data_links = {
     },
     "indicator": {
         "DM_": link_prefix + "umr_data_DM_.csv",
-        "ECON_": link_prefix + "umr_data_ECON_.csv",
+        # "ECON_": link_prefix + "umr_data_ECON_.csv",
         "MG_": link_prefix + "umr_data_MG_.csv",
         "MNCH_": link_prefix + "umr_data_MNCH_.csv",
         "PT_": link_prefix + "umr_data_PT_.csv",
@@ -151,7 +151,6 @@ def join_indicator(gdf, df, indicator):
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
         # new_gdf["OBS_VALUE"] = new_gdf["OBS_VALUE"].values+100
         new_gdf["OBS_VALUE"] = new_gdf["OBS_VALUE"].astype(float)
-
     elif indicator == "MNCH_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "PT_":
@@ -221,10 +220,10 @@ def app():
     # Associate these group labels with thier file prefixes:
     indicator_group_dict = {
             "Demographic": "DM_",
-            "Economic": "ECON_",
+            # "Economic": "ECON_",
             "Migratory": "MG_",
-            "Maternal, Newborn, and Child Health": "MNCH_",
-            "Post-Trauma": "PT_",
+            # "Maternal, Newborn, and Child Health": "MNCH_",
+            # "Post-Trauma": "PT_",
             "Water Services": "WS_"
     }
 
@@ -272,8 +271,7 @@ def app():
     )
 
     with row1_col1:
-        # indicator_group = st.selectbox("**Risk Factor Group**", ["DM_", "ECON_", "MG_", "MNCH_", "PT_", "WS_"])
-        indicator_group_selected = st.selectbox("**Indictator Group**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health", "Post-Trauma", "Water Services"])
+        indicator_group_selected = st.selectbox("**Indictator Group**", ["Demographic", "Migratory", "Water Services"])
         indicator_group = indicator_group_dict[indicator_group_selected]
         
     # Get geometry data
@@ -290,22 +288,13 @@ def app():
 
     # Get Indicator Group data
     indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
-
-    #########################################
     indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
     indicator_df = indicator_df[indicator_df.TIME_PERIOD==selected_year]
 
     with row1_col2:
         selected_col = "OBS_VALUE" #st.selectbox("Attribute", data_cols, 4)
-        # st.write(indicator_df.head(3))
-
         this_ind_list = indicator_df["INDICATOR"].unique().tolist()
         this_indicator = st.selectbox(f"**{indicator_group_selected} Indicators**", this_ind_list)
-        # this_indicator_text = get_indicator_dict(this_indicator)
-
-        # Display the indicator full text
-        # st.write(this_indicator_text)
-
 
 
     show_tables = "no"
@@ -332,11 +321,11 @@ def app():
     palettes = cm.list_colormaps()
 
     with row2_col1:
-        palette1 = st.selectbox("**Net Migration Rate:**", palettes, index=palettes.index("Blues"))
+        palette1 = st.selectbox("**NMR Choropleth Colorbar:**", palettes, index=palettes.index("RdYlBu"))
         palette2 = "Greens" #st.selectbox(f"{this_indicator} Color palette", palettes, index=palettes.index("Greens"))
 
     with row2_col2:
-        n_colors = st.slider("Number of colors", min_value=2, max_value=20, value=8)
+        n_colors = st.slider("Number of colors", min_value=2, max_value=10, value=3)
         show_3d = st.checkbox("Show 3D view", value=False)
         if show_3d:
             elev_scale = st.slider(
@@ -349,22 +338,15 @@ def app():
 
     with row2_col3:
         # show_nodata = st.checkbox("Show nodata areas", value=True)
-        st.write("**Risk Factor:**")
-        show_indicator = st.checkbox("Show Points", value=False)
-        ind_scale = st.slider("Scale:", min_value=1, max_value=700, value=1)
+        st.write("**Indicator Data Points:**")
+        show_indicator = st.checkbox("Show Points", value=True)
+        ind_scale = st.slider("Scale:", min_value=1, max_value=700, value=100)
 
     with row2_col4:
-        show_chloro = st.checkbox("Show **Net Migration** Chloropleth", value=True)
+        show_chloro = st.checkbox("Show **Net Migration** Choropleth", value=True)
         show_nodata = st.checkbox("Show nodata", value=False)
         show_labels = st.checkbox("Show Heatmap", value=False)
         # heat_scale = st.slider("Heat scale:", min_value=1, max_value=20, value=4)
-
-    # with row2_col5:
-    #     st.write(".")
-
-
-
-    # ###################### The `JOINS` ###############################################
 
     gdf = join_attributes(gdf, inventory_df, scale.lower())
     gdf_null = select_null(gdf, selected_col)
@@ -376,35 +358,24 @@ def app():
     gdf2 = get_geom_data(scale.lower())
     gdf2 = join_indicator(gdf2, indicator_df, indicator_group)
 
-    # # Create centroids projection on flat projection, then back
+    # Create centroids projection on flat projection, then back
     gdf2["centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
     gdf2.drop(columns=["geometry"], inplace=True)
     gdf2["long"] = round(gdf2.centroids.map(lambda p: p.x),5)
     gdf2["lat"] = round(gdf2.centroids.map(lambda p: p.y),5)
-    # gdf2["geometry"] = "["+ gdf2['long'].astype(str) +","+ gdf2["lat"].astype(str) +"]"
     gdf2 = gdf2.set_geometry("centroids")
 
     gdf2.drop(columns=["REF_AREA"], inplace=True)
     gdf2 = gdf2[["id", "name", "centroids", "TIME_PERIOD", "INDICATOR", "OBS_VALUE", "long", "lat"]]
 
-
-
     gdf2_null = select_null(gdf2, selected_col)
     gdf2 = select_non_null(gdf2, selected_col)
     gdf2 = gdf2.sort_values(by=selected_col, ascending=True)
     gdf2 = gdf2[gdf2.INDICATOR==this_indicator]
-    # gdf2["INDICATOR"] = get_indicator_dict(gdf2["INDICATOR"])
     gdf2.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
-    # st.write(gdf2)
-
-
-
-
-    # ###################### Colors
  
     geo_colors_1 = cm.get_palette(palette1, n_colors)
     geo_colors_2 = cm.get_palette(palette2, n_colors)
-
 
     def gen_colors(gdf, colors):
         colors = [hex_to_rgb(c) for c in colors]
@@ -429,9 +400,6 @@ def app():
     # min_ind_value = gdf2[selected_col].min()
     # max_ind_value = gdf2[selected_col].max()
 
-    # st.write(geo_layer_2.head())
-
-    color = "color"
     # color_exp = f"[({selected_col}-{min_value})/({max_value}-{min_value})*255, 0, 0]"
     color_exp = f"[R, G, B]"
 
@@ -452,14 +420,13 @@ def app():
         "GeoJsonLayer",
         geo_layer_1,
         pickable=True,
-        opacity=0.2,
+        opacity=0.25,
         stroked=True,
         filled=True,
         extruded=show_3d,
         wireframe=True,
         get_elevation=f"{selected_col}",
         elevation_scale=elev_scale,
-        # get_fill_color="color",
         get_fill_color=color_exp,
         get_line_color=[255,255,255],
         get_line_width=10,
@@ -483,21 +450,14 @@ def app():
         line_width_min_pixels=2,
     )
 
-    # Use pandas to calculate additional data
-    # st.write(geo_layer_1)
-
-    # geo_layer_2["OBS_VALUE"] = round(geo_layer_2["OBS_VALUE"]*1000)
-
-    # st.write(f"{round(min2*1000)} : {round(max2*1000)}")
     geo_layer_2["obs_radius"] = geo_layer_2["OBS_VALUE"].map(lambda obs_count: math.sqrt(obs_count)*ind_scale)
-    # st.write(geo_layer_2.head())
 
     # Define a layer to display on a map
     geojson_indicator = pdk.Layer(
         "ScatterplotLayer",
         geo_layer_2,
         pickable=True,
-        opacity=0.05,
+        opacity=0.1,
         stroked=True,
         filled=True,
         radius_scale=100,
@@ -506,7 +466,7 @@ def app():
         line_width_min_pixels=1,
         get_position="[long, lat]",
         get_radius="obs_radius",
-        get_fill_color=[255, 240, 0],
+        get_fill_color=[0, 240, 50],
         get_line_color=[0, 0, 0],
     )
 
