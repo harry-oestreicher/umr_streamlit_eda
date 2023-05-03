@@ -54,7 +54,7 @@ with st.sidebar:
                 )
 
 if Toggle == True:
-    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
+    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/streamlit/"
 else:
     link_prefix = "data/"
 
