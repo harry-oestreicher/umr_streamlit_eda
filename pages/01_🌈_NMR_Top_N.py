@@ -83,10 +83,9 @@ data_links = {
 @st.cache_data
 def get_indicator_data(url):
     df = pd.read_csv(url)
+    df = df[df["TIME_PERIOD"] >= 2011].copy()
     df.drop(columns=["Unnamed: 0"], inplace=True)
-    pd.to_numeric(df["OBS_VALUE"])
     df.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
-    
     return df
 
 def get_indicator_dict(name):
@@ -126,9 +125,14 @@ def app():
             "Demographic": "DM_",
             "Economic": "ECON_",
             "Migratory": "MG_",
+            "Water Services": "WS_",
             "Maternal, Newborn, and Child Health": "MNCH_",
-            # "Post-Trauma": "PT_",
-            "Water Services": "WS_"
+            "PT_": "PT_",
+            "Youth Workforce": "WT_",
+            "ED_": "ED_",
+            "GN_": "GN_",
+            "HVA_": "HVA_",
+            "IM_": "IM_",
     }
 
     row0_col0, row0_col1, row0_col2  = st.columns([2,1,4])
@@ -159,7 +163,8 @@ def app():
     row1_col1, row1_col2, = st.columns([4, 4])
 
     with row1_col1:
-        indicator_group_selected = st.selectbox("**Indictator Group:**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health", "Water Services"])
+        indicator_group_selected = st.selectbox("**Indictator Group:**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health",
+                                                                          "Water Services", "PT_", "Youth Workforce","ED_", "GN_", "HVA_", "IM_" ])
         indicator_group = indicator_group_dict[indicator_group_selected]      
   
     indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
@@ -169,6 +174,12 @@ def app():
         this_ind_list = indicator_df["INDICATOR"].unique().tolist()
         this_indicator = st.selectbox(f"**{indicator_group_selected}** Indicators:", this_ind_list)
 
+    # Remove non-numeric values for this vizualization
+    if indicator_df.OBS_VALUE.dtypes == object:
+        indicator_df = indicator_df[indicator_df["OBS_VALUE"].str.contains("<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
+    
+    indicator_df["OBS_VALUE"] = indicator_df["OBS_VALUE"].astype(float)
+    # st.write(indicator_df.OBS_VALUE.dtypes)
     net_mg_rate = df[df.INDICATOR=='Net migration rate (per 1,000 population)'].sort_values('OBS_VALUE').copy()
 
     if all_year_toggle != True:
@@ -211,6 +222,9 @@ def app():
 
 
     top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
+
+    # top_40_nmr_sorted.rename(columns={"REF_AREA":"Country"}, inplace=True)
+    # top_40_merged.rename(columns={"REF_AREA":"Country"}, inplace=True)
 
     # "Net migration rate (per 1,000 population)" | "DM_NET_MG_RATE"
     nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].hvplot.line( y="OBS_VALUE", x="REF_AREA", legend=False, rot=45, width=1000, height=500)
