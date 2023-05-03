@@ -54,10 +54,9 @@ with st.sidebar:
                 )
 
 if Toggle == True:
-    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/umr/"
+    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/streamlit/"
 else:
     link_prefix = "data/"
-
 
 data_links = {
     "reference": {
@@ -68,11 +67,16 @@ data_links = {
         "_ALL_": link_prefix + "all_indicators_2012-2022.csv",
         "DM_": link_prefix + "umr_data_DM_.csv",
         "ECON_": link_prefix + "umr_data_ECON_.csv",
+        "ED_": link_prefix + "umr_data_ED_NEW.csv",
+        "GN_": link_prefix + "umr_data_GN_NEW.csv",
+        "HVA_": link_prefix + "umr_data_HVA_NEW.csv",
+        "IM_": link_prefix + "umr_data_IM_NEW.csv",
         "MG_": link_prefix + "umr_data_MG_.csv",
-        "MNCH_": link_prefix + "umr_data_MNCH_.csv",
-        "PT_": link_prefix + "umr_data_PT_.csv",
+        "MNCH_": link_prefix + "umr_data_MNCH_NEW.csv",
+        "PT_": link_prefix + "umr_data_PT_NEW.csv",
         "PV_": link_prefix + "umr_data_PV_.csv",
         "WS_": link_prefix + "umr_data_WS_.csv",
+        "WT_": link_prefix + "umr_data_WT_NEW.csv",
     },
 }
 
