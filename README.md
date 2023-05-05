@@ -6,23 +6,7 @@
 
 This MVP is an exploratory data analysis tool to examine the risk factors related to underage migrant youths.
 
-[demo](https://harry-oestreicher-umr-streamlit-eda-home-fmh202.streamlit.app)
-
----
-
-    MNCH data notes:
-
-    Some important indicators are collected by regions instead of countries.  So we'll write some code to address these.
-
-    - UNFPA_AP : Asia Pacific
-    - UNFPA_EECA : Eastern Europe and Central Asia
-    - UNFPA_ESA : Eastern and Southern Africa
-    - UNFPA_LAC : Latin America and Carribean
-    - UNFPA_WCA : Western and Central Africa
-    - UNICEF_ECARO : Europe and Central Asia Region
-    - UNICEF_EECA : Eastern Europe and Central Asia
-
-
+[live demo](https://harry-oestreicher-umr-streamlit-eda-home-fmh202.streamlit.app)
 
 ## Getting Started & Running the Code
 
