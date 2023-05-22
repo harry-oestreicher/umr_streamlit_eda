@@ -6,7 +6,7 @@
 
 This MVP is an exploratory data analysis tool to examine the risk factors related to underage migrant youths.
 
-[live demo](https://harry-oestreicher-umr-streamlit-eda-home-fmh202.streamlit.app)
+[live demo](https://umresearch-eda.streamlit.app/)
 
 ## Getting Started & Running the Code
 
