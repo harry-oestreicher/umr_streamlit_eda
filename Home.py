@@ -4,7 +4,7 @@ import logging
 import streamlit as st
 import sys
 import time
-import streamlit.components.v1 as components
+# import streamlit.components.v1 as components
 import src.utils.streamlit_gui as utl
 from pathlib import Path
 from PIL import Image

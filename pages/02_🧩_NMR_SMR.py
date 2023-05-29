@@ -10,8 +10,8 @@ import streamlit as st
 import hvplot.pandas
 import panel as pn
 import holoviews as hv
-import bokeh.plotting
-import streamlit_toggle as tog
+# import bokeh.plotting
+# import streamlit_toggle as tog
 
 from holoviews import opts
 # hv.extension('bokeh', logo=False)
@@ -42,18 +42,18 @@ Use the checkbox to preview dataframes before rendering any visualzations.
 """)
 
 with st.sidebar:
-    Toggle = tog.st_toggle_switch(label="fetch data from cloud", 
-                key=True, 
-                default_value=False, 
-                label_after = False, 
-                inactive_color = '#D3D3D3', 
-                active_color="#11567f", 
-                track_color="#29B5E8"
-                )
+#     Toggle = tog.st_toggle_switch(label="fetch data from cloud", 
+#                 key=True, 
+#                 default_value=False, 
+#                 label_after = False, 
+#                 inactive_color = '#D3D3D3', 
+#                 active_color="#11567f", 
+#                 track_color="#29B5E8"
+#                 )
 
-if Toggle == True:
-    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/"
-else:
+# if Toggle == True:
+#     link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/"
+# else:
     link_prefix = "data/"
 
 data_links = {

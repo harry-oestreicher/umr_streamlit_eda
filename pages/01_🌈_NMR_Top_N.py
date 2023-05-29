@@ -1,19 +1,19 @@
 import os
 import sys
-import time
-import math
-import pathlib
-import requests
-import datetime
+# import time
+# import math
+# import pathlib
+# import requests
+# import datetime
 import pandas as pd
 import streamlit as st
 import hvplot.pandas
-import panel as pn
+# import panel as pn
 import holoviews as hv
-import bokeh.plotting
+# import bokeh.plotting
 import streamlit_toggle as tog
 
-from holoviews import opts
+# from holoviews import opts
 hv.extension('bokeh')
 from bokeh.models.formatters import NumeralTickFormatter
 
@@ -57,6 +57,8 @@ if Toggle == True:
     link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/streamlit/"
 else:
     link_prefix = "data/"
+    link_prefix = "data/"
+    
 
 data_links = {
     "reference": {
@@ -227,9 +229,12 @@ def app():
     # top_40_merged.rename(columns={"REF_AREA":"Country"}, inplace=True)
 
     # "Net migration rate (per 1,000 population)" | "DM_NET_MG_RATE"
-    nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].hvplot.line( y="OBS_VALUE", x="REF_AREA", legend=False, rot=45, width=1000, height=500)
-    nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
+    # nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].hvplot.line( y="OBS_VALUE", x="REF_AREA", legend=False, rot=45, width=1000, height=500)
+    # nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
     # st.write("### Top NMR Countries Indicator Comparison")
-    st.write(hv.render(nice_plot1*nice_plot2, backend='bokeh'))
+
+    nice_plot1 = top_40_nmr_sorted.hvplot()
+
+    st.write(hv.render(nice_plot1, backend='bokeh'))
 
 app()
