@@ -235,6 +235,6 @@ def app():
 
     nice_plot1 = top_40_nmr_sorted.hvplot()
 
-    st.write(hv.render(nice_plot1, backend='bokeh'))
+    st.write(hv.render(nice_plot1))
 
 app()
