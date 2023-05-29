@@ -14,7 +14,7 @@ import holoviews as hv
 # import streamlit_toggle as tog
 
 from holoviews import opts
-# hv.extension('bokeh', logo=False)
+hv.extension('bokeh', logo=False)
 from bokeh.models.formatters import NumeralTickFormatter
 
 num_formatter = NumeralTickFormatter(format="0,0")

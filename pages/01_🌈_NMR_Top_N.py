@@ -7,17 +7,23 @@ import sys
 # import datetime
 import pandas as pd
 import streamlit as st
-import hvplot.pandas
+# import hvplot.pandas
 # import panel as pn
 import holoviews as hv
 # import bokeh.plotting
+from bokeh.plotting import figure
+
 import streamlit_toggle as tog
 
 # from holoviews import opts
-hv.extension('bokeh')
-from bokeh.models.formatters import NumeralTickFormatter
+hv.extension('bokeh', logo=False)
 
-num_formatter = NumeralTickFormatter(format="0,0")
+# from bokeh.models.formatters import NumeralTickFormatter
+# num_formatter = NumeralTickFormatter(format="0,0")
+
+# import plotly.figure_factory as ff
+
+
 
 sys.path.append("..")
 from data.dictionary import get_dictionary
@@ -233,8 +239,31 @@ def app():
     # nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
     # st.write("### Top NMR Countries Indicator Comparison")
 
-    nice_plot1 = top_40_nmr_sorted.hvplot()
+    # nice_plot1 = top_40_nmr_sorted.hvplot()
 
-    st.write(hv.render(nice_plot1))
+    # st.write(hv.render(nice_plot1, backend='bokeh'))
+
+
+    # trim = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"]
+    # chart_data = trim[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
+    # st.area_chart(chart_data, y='OBS_VALUE', x='REF_AREA')
+
+    # x = chart_data['REF_AREA'].values.tolist()
+    # y = chart_data['OBS_VALUE'].values.tolist()
+    # st.write(x)
+    # st.write(y)
+
+    x = [1, 2, 3, 4, 5]
+    y = [6, 7, 2, 4, 5]
+
+    p = figure(
+        title='test',
+        x_axis_label='x',
+        y_axis_label='y',
+        height=300)
+
+    p.line(x, y, legend_label='NMR', line_width=2)
+
+    st.bokeh_chart(p, use_container_width=True)
 
 app()
