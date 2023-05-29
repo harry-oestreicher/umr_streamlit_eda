@@ -26,17 +26,7 @@ def main():
     # Page Header information
     st.title("Unaccompanied Minor Research", anchor=None)
     st.write("### Exploratory Data Analysis")
-    st.write("""This vizualization tool allows you to explore associated risk factors with Net Migraion Rate of unaccompanied minors.
-    
-    Despite streamlit allowing to turn of telemetry, this introduces breaking changes for production apps on thier cloud platform.  
-    
-    This also coincuides with the aquisition by Snowfl@ke. 
-
-    While troubleshooting, I stumbled across this:
-
-    https://www.reddit.com/r/Python/comments/121pvdy/warning_streamlit_collects_a_lot_of_data/
-    
-    """)
+    st.write("""This vizualization tool allows you to explore associated risk factors with Net Migraion Rate of unaccompanied minors.""")
     st.markdown("---")
     return
 
