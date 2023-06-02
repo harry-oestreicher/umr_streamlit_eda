@@ -7,17 +7,17 @@ import requests
 import datetime
 import pandas as pd
 import streamlit as st
-import hvplot.pandas
-import panel as pn
-import holoviews as hv
+# import hvplot.pandas
+# import panel as pn
+# import holoviews as hv
 # import bokeh.plotting
 # import streamlit_toggle as tog
 
-from holoviews import opts
-hv.extension('bokeh', logo=False)
-from bokeh.models.formatters import NumeralTickFormatter
+# from holoviews import opts
+# hv.extension('bokeh', logo=False)
+# from bokeh.models.formatters import NumeralTickFormatter
 
-num_formatter = NumeralTickFormatter(format="0,0")
+# num_formatter = NumeralTickFormatter(format="0,0")
 
 sys.path.append("..")
 from data.dictionary import get_dictionary
@@ -117,9 +117,14 @@ def app():
         with row1a_col2:
             st.write(".")
 
-    nice_plot1 = sorted.hvplot.line(x="REF_AREA", y=["NMR", "SMR"], legend=True, rot=85, width=1100, height=600)
+    # nice_plot1 = sorted.hvplot.line(x="REF_AREA", y=["NMR", "SMR"], legend=True, rot=85, width=1100, height=600)
     # nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
     # # st.write("### Top NMR Countries Indicator Comparison")
-    st.write(hv.render(nice_plot1, backend='bokeh'))
+    # st.write(hv.render(nice_plot1, backend='bokeh'))
+
+    # trim = top_40_merged[top_40_merged.INDICATOR=="Net migration rate (per 1,000 population)"]
+    chart_data = sorted[['REF_AREA', 'TIME_PERIOD', 'AGE_x','SMR','RANK','AGE_y','NMR']].sort_values('REF_AREA').copy()
+    st.area_chart(chart_data, y='NMR', x='REF_AREA')
+
 
 app()

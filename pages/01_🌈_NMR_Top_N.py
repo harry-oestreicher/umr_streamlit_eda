@@ -243,27 +243,23 @@ def app():
 
     # st.write(hv.render(nice_plot1, backend='bokeh'))
 
-
-    # trim = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"]
-    # chart_data = trim[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
-    # st.area_chart(chart_data, y='OBS_VALUE', x='REF_AREA')
+    trim = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"]
+    chart_data = trim[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
+    st.area_chart(chart_data, y='OBS_VALUE', x='REF_AREA')
 
     # x = chart_data['REF_AREA'].values.tolist()
     # y = chart_data['OBS_VALUE'].values.tolist()
     # st.write(x)
     # st.write(y)
 
-    x = [1, 2, 3, 4, 5]
-    y = [6, 7, 2, 4, 5]
-
-    p = figure(
-        title='test',
-        x_axis_label='x',
-        y_axis_label='y',
-        height=300)
-
-    p.line(x, y, legend_label='NMR', line_width=2)
-
-    st.bokeh_chart(p, use_container_width=True)
+    # x = [1, 2, 3, 4, 5]
+    # y = [6, 7, 2, 4, 5]
+    # p = figure(
+    #     title='test',
+    #     x_axis_label='x',
+    #     y_axis_label='y',
+    #     height=300)
+    # p.line(x, y, legend_label='NMR', line_width=2)
+    # st.bokeh_chart(p, use_container_width=True)
 
 app()
