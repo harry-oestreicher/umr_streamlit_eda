@@ -9,14 +9,15 @@ import pandas as pd
 import streamlit as st
 # import hvplot.pandas
 # import panel as pn
-import holoviews as hv
-# import bokeh.plotting
+# import holoviews as hv
+# import bokeh.models
+import bokeh.plotting
 from bokeh.plotting import figure
 
 import streamlit_toggle as tog
 
 # from holoviews import opts
-hv.extension('bokeh', logo=False)
+# hv.extension('bokeh', logo=False)
 
 # from bokeh.models.formatters import NumeralTickFormatter
 # num_formatter = NumeralTickFormatter(format="0,0")
@@ -62,7 +63,6 @@ with st.sidebar:
 if Toggle == True:
     link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/streamlit/"
 else:
-    link_prefix = "data/"
     link_prefix = "data/"
     
 

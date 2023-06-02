@@ -1,6 +1,6 @@
 fqdn==1.5.1
 geopandas==0.12.2
-hvplot==0.8.3
+hvplot==0.8.1
 isoduration==20.11.0
 jsonpointer==2.3
 leaflet==0.0.3
