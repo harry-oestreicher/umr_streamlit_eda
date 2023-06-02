@@ -14,7 +14,7 @@ import streamlit as st
 import bokeh.plotting
 from bokeh.plotting import figure
 
-import streamlit_toggle as tog
+# import streamlit_toggle as tog
 
 # from holoviews import opts
 # hv.extension('bokeh', logo=False)
@@ -144,18 +144,15 @@ def app():
         num_extremes = st.slider("Number of Extreme (Hi/Low) NMR Countries to include in analysis:", min_value=2, max_value=40, value=10)
 
     with row0_col1:
-        all_year_toggle = tog.st_toggle_switch(label="Show All NMR Years?", 
-                    key='all_years', 
-                    default_value=False, 
-                    label_after = True, 
-                    inactive_color = '#D3D3D3', 
-                    active_color="#11567f", 
-                    track_color="#29B5E8"
-                    )
+
+        
+        all_year_toggle = st.radio(
+            "Combine all  NMR years?",
+            ('Yes', 'No'))
    
     with row0_col2:
         yrs = range(2012,2022+1)
-        if all_year_toggle != True:
+        if all_year_toggle == 'No':
             year_selected =  st.selectbox("**Select NMR year:**", yrs)
         else:
             year_selected =  st.selectbox("**Select NMR year:**", yrs, disabled=True)
@@ -185,7 +182,7 @@ def app():
     # st.write(indicator_df.OBS_VALUE.dtypes)
     net_mg_rate = df[df.INDICATOR=='Net migration rate (per 1,000 population)'].sort_values('OBS_VALUE').copy()
 
-    if all_year_toggle != True:
+    if all_year_toggle == 'No':
         net_mg_rate = net_mg_rate[net_mg_rate.TIME_PERIOD==year_selected].copy()
 
     def trim_the_fat(df, num):
@@ -238,9 +235,20 @@ def app():
 
     # st.write(hv.render(nice_plot1, backend='bokeh'))
 
-    trim = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"]
-    chart_data = trim[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
-    st.area_chart(chart_data, y='OBS_VALUE', x='REF_AREA')
+    # nmr_df = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].copy()
+
+
+    nmr_df = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].copy()
+    ind_df = top_40_merged[top_40_merged.INDICATOR==this_indicator].copy()
+
+    merged_df = nmr_df.merge(ind_df, on=["REF_AREA", "TIME_PERIOD"], how='left')
+    merged_df.rename(columns={"REF_AREA": "Country", "OBS_VALUE_x": "Net Migration Rate", "OBS_VALUE_y": this_indicator}, inplace=True)
+
+    # NMR_data = nmr_df[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
+    # IND_data = ind_df[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
+    # st.dataframe(merged_df)
+
+    st.line_chart(merged_df, y=['Net Migration Rate', this_indicator], x='Country')
 
     # x = chart_data['REF_AREA'].values.tolist()
     # y = chart_data['OBS_VALUE'].values.tolist()

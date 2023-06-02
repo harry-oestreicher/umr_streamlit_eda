@@ -119,7 +119,14 @@ def app():
 
     # trim = top_40_merged[top_40_merged.INDICATOR=="Net migration rate (per 1,000 population)"]
     chart_data = sorted[['REF_AREA', 'TIME_PERIOD', 'AGE_x','SMR','RANK','AGE_y','NMR']].sort_values('REF_AREA').copy()
-    st.area_chart(chart_data, y='NMR', x='REF_AREA')
+    chart_data.rename(columns={
+        "REF_AREA": "Country", 
+        "AGE_x": "NMR Age",
+        "AGE_y": "SMR Age",
+        "NMR": "Net Migration Rate",
+        "SMR": "Suicide/Mortality Rate",
+    }, inplace=True)
 
+    st.line_chart(chart_data, y=["Net Migration Rate", "Suicide/Mortality Rate" ], x='Country')
 
 app()
