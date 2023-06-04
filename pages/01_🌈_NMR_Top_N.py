@@ -163,7 +163,9 @@ def app():
     with row1_col2:
         this_ind_list = indicator_df["INDICATOR"].unique().tolist()
         this_indicator = st.selectbox(f"**{indicator_group_selected}** Indicators:", this_ind_list)
-    
+        how_merge = st.radio( "How to merge?", ('left', 'right', 'outer', 'inner'))
+        
+   
     # Remove non-numeric values for this vizualization
     if indicator_df.OBS_VALUE.dtypes == object:
         indicator_df = indicator_df[indicator_df["OBS_VALUE"].str.contains("<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
@@ -171,7 +173,6 @@ def app():
     indicator_df["OBS_VALUE"] = indicator_df["OBS_VALUE"].astype(float)
 
     top_40_others = indicator_df[indicator_df["REF_AREA"].isin(top_40_nmr_countries)]
-
     top_40_merged = pd.concat([top_40_nmr,top_40_others])
     top_40_merged.sort_values(by=["REF_AREA", "TIME_PERIOD", "INDICATOR"], inplace=True)
     
@@ -181,11 +182,13 @@ def app():
     top_40_merged = top_40_merged.replace({"REF_AREA": REF_AREA_dict}).copy()
     top_40_others = top_40_others.replace({"REF_AREA": REF_AREA_dict}).copy()
 
+    # Sort and filter NMR only
     top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
     nmr_df = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].copy()
     ind_df = top_40_merged[top_40_merged.INDICATOR==this_indicator].copy()
 
-    merged_df = nmr_df.merge(ind_df, on=["REF_AREA", "TIME_PERIOD"], how='inner').copy()
+    # Do the merge
+    merged_df = nmr_df.merge(ind_df, on=["REF_AREA", "TIME_PERIOD"], how=how_merge).copy()
     merged_df.rename(columns={"REF_AREA": "Country", "OBS_VALUE_x": "Net Migration Rate", "OBS_VALUE_y": this_indicator}, inplace=True)
 
     show_tables = "no"
@@ -196,14 +199,18 @@ def app():
 
         with row1a_col1:
             st.write("**Top-10 NMR (2012 - 2022)**")
-            st.write(top_40_nmr)
+            st.write(nmr_df)
 
         with row1a_col2:
             st.write("**Top-10 NMR All Indicators (2012 - 2022)**")
-            st.write(top_40_others)
+            st.write(ind_df)
 
+    
+        
         st.write("**Merged Tables**")
         st.dataframe(merged_df)
+
+
 
     st.line_chart(merged_df, y=['Net Migration Rate', this_indicator], x='Country', height=500)
 
