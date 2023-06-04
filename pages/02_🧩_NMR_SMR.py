@@ -7,24 +7,12 @@ import requests
 import datetime
 import pandas as pd
 import streamlit as st
-# import hvplot.pandas
-# import panel as pn
-# import holoviews as hv
-# import bokeh.plotting
-# import streamlit_toggle as tog
-
-# from holoviews import opts
-# hv.extension('bokeh', logo=False)
-# from bokeh.models.formatters import NumeralTickFormatter
-
-# num_formatter = NumeralTickFormatter(format="0,0")
 
 sys.path.append("..")
 from data.dictionary import get_dictionary
 INDICATOR_dict = get_dictionary('INDICATOR')
 REF_AREA_dict = get_dictionary('REF_AREA')
 
-# Begin Streamlit
 # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
 if 'sidebar_state' not in st.session_state:
     st.session_state.sidebar_state = 'collapsed'
@@ -60,9 +48,7 @@ data_links = {
 @st.cache_data
 def get_indicator_data(url):
     df = pd.read_csv(url)
-    # df = df[df["TIME_PERIOD"] >= 2011].copy()
     df.drop(columns=["Unnamed: 0"], inplace=True)
-    # df.replace({"INDICATOR": INDICATOR_dict}, inplace=True)
     return df
 
 def get_indicator_dict(name):
@@ -81,16 +67,10 @@ def enumerate_column(col_in):
         val = INDICATOR.get(col_in)
     return val
 
-# def get_indicators(df):
-#     indicator_list = df["INDICATOR"].unique()
-#     return indicator_list
-
 def app():
-    # st.title("Unaccompanied Minor Research")
     st.write(
         """
-        ### Exploratory Data Analysis
-        
+        Net migration rate and suicide mortality rate analysis.
         """
     )
 
@@ -101,8 +81,6 @@ def app():
     sorted = df.sort_values(by=["REF_AREA", "TIME_PERIOD"]).copy()
     sorted = sorted.replace({"REF_AREA": REF_AREA_dict}).copy()
 
-    # sorted["SMR"] = sorted.groupby("TIME_PERIOD")['SMR'].transform("mean")
-
     show_tables = "no"
     show_tables = st.checkbox("Show Dataframes")
     if show_tables:
@@ -112,12 +90,6 @@ def app():
         with row1a_col2:
             st.write(".")
 
-    # nice_plot1 = sorted.hvplot.line(x="REF_AREA", y=["NMR", "SMR"], legend=True, rot=85, width=1100, height=600)
-    # nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
-    # # st.write("### Top NMR Countries Indicator Comparison")
-    # st.write(hv.render(nice_plot1, backend='bokeh'))
-
-    # trim = top_40_merged[top_40_merged.INDICATOR=="Net migration rate (per 1,000 population)"]
     chart_data = sorted[['REF_AREA', 'TIME_PERIOD', 'AGE_x','SMR','RANK','AGE_y','NMR']].sort_values('REF_AREA').copy()
     chart_data.rename(columns={
         "REF_AREA": "Country", 
@@ -127,6 +99,6 @@ def app():
         "SMR": "Suicide/Mortality Rate",
     }, inplace=True)
 
-    st.line_chart(chart_data, y=["Net Migration Rate", "Suicide/Mortality Rate" ], x='Country')
+    st.line_chart(chart_data, y=["Net Migration Rate", "Suicide/Mortality Rate" ], x='Country', height=500)
 
 app()

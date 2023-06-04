@@ -1,37 +1,15 @@
 import os
 import sys
-# import time
-# import math
-# import pathlib
-# import requests
-# import datetime
 import pandas as pd
 import streamlit as st
-# import hvplot.pandas
-# import panel as pn
-# import holoviews as hv
-# import bokeh.models
 import bokeh.plotting
 from bokeh.plotting import figure
-
-# import streamlit_toggle as tog
-
-# from holoviews import opts
-# hv.extension('bokeh', logo=False)
-
-# from bokeh.models.formatters import NumeralTickFormatter
-# num_formatter = NumeralTickFormatter(format="0,0")
-
-# import plotly.figure_factory as ff
-
-
 
 sys.path.append("..")
 from data.dictionary import get_dictionary
 INDICATOR_dict = get_dictionary('INDICATOR')
 REF_AREA_dict = get_dictionary('REF_AREA')
 
-# Begin Streamlit
 # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
 if 'sidebar_state' not in st.session_state:
     st.session_state.sidebar_state = 'collapsed'
@@ -39,14 +17,13 @@ if 'sidebar_state' not in st.session_state:
 # Streamlit set_page_config method has a 'initial_sidebar_state' argument that controls sidebar state.
 st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state, layout="wide")
 
-# Show title and description of the app.
 st.title("Net Migration Rate")
 st.sidebar.write("""
 **Sidebar**
 
 Use the filter dropdowns to alter your results.
 
-Use the checkbox to preview dataframes before rendering any visualzations.
+Use the checkbox to preview dataframes while rendering visualzations.
 
 """)
 
@@ -115,8 +92,7 @@ def app():
     # st.title("Unaccompanied Minor Research")
     st.write(
         """
-        ### Exploratory Data Analysis
-          
+        Exploratory Data Analysis tool for net migration rate and environmental indicators datasets.
         """
     )
 
@@ -138,14 +114,12 @@ def app():
             "IM_": "IM_",
     }
 
+    st.write("#### Net Migration Rate Filters:")
     row0_col0, row0_col1, row0_col2  = st.columns([2,1,4])
-
     with row0_col0:
         num_extremes = st.slider("Number of Extreme (Hi/Low) NMR Countries to include in analysis:", min_value=2, max_value=40, value=10)
 
     with row0_col1:
-
-        
         all_year_toggle = st.radio(
             "Combine all  NMR years?",
             ('Yes', 'No'))
@@ -157,29 +131,9 @@ def app():
         else:
             year_selected =  st.selectbox("**Select NMR year:**", yrs, disabled=True)
 
-    st.write("---")
+    st.write(" ")
 
     df = get_indicator_data(data_links["indicator"]["_ALL_"])
-    row1_col1, row1_col2, = st.columns([4, 4])
-
-    with row1_col1:
-        indicator_group_selected = st.selectbox("**Indictator Group:**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health",
-                                                                          "Water Services", "PT_", "Youth Workforce","ED_", "GN_", "HVA_", "IM_" ])
-        indicator_group = indicator_group_dict[indicator_group_selected]      
-  
-    indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
-    indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
-
-    with row1_col2:
-        this_ind_list = indicator_df["INDICATOR"].unique().tolist()
-        this_indicator = st.selectbox(f"**{indicator_group_selected}** Indicators:", this_ind_list)
-
-    # Remove non-numeric values for this vizualization
-    if indicator_df.OBS_VALUE.dtypes == object:
-        indicator_df = indicator_df[indicator_df["OBS_VALUE"].str.contains("<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
-    
-    indicator_df["OBS_VALUE"] = indicator_df["OBS_VALUE"].astype(float)
-    # st.write(indicator_df.OBS_VALUE.dtypes)
     net_mg_rate = df[df.INDICATOR=='Net migration rate (per 1,000 population)'].sort_values('OBS_VALUE').copy()
 
     if all_year_toggle == 'No':
@@ -191,20 +145,48 @@ def app():
         out = pd.concat([upp,lwr])
         return out.sort_values('REF_AREA', ascending=False)
 
-    # Trim extremes (top-5 and bottom-5) into a new dataframe.
+    # Trim extremes (topN and bottomN) into a new dataframe.
     top_40_nmr = trim_the_fat(net_mg_rate, num_extremes)
     top_40_nmr.sort_values(by=["REF_AREA", "OBS_VALUE"], inplace=True)
     top_40_nmr_countries = top_40_nmr["REF_AREA"].unique()
+
+    st.write("#### Indicator Groups and Filters:")
+    row1_col1, row1_col2, = st.columns([4, 4])
+    with row1_col1:
+        indicator_group_selected = st.selectbox("**Indictator Group:**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health",
+                                                                          "Water Services", "PT_", "Youth Workforce","ED_", "GN_", "HVA_", "IM_" ])
+        indicator_group = indicator_group_dict[indicator_group_selected]      
+  
+    indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
+    indicator_df = indicator_df[indicator_df.INDICATOR!="Net migration rate (per 1,000 population)"]
+
+    with row1_col2:
+        this_ind_list = indicator_df["INDICATOR"].unique().tolist()
+        this_indicator = st.selectbox(f"**{indicator_group_selected}** Indicators:", this_ind_list)
+    
+    # Remove non-numeric values for this vizualization
+    if indicator_df.OBS_VALUE.dtypes == object:
+        indicator_df = indicator_df[indicator_df["OBS_VALUE"].str.contains("<|>|_| |Yes|yes|No|no|Very|High|high|Medium|medium|Low|low") == False].copy()
+    
+    indicator_df["OBS_VALUE"] = indicator_df["OBS_VALUE"].astype(float)
+
     top_40_others = indicator_df[indicator_df["REF_AREA"].isin(top_40_nmr_countries)]
 
     top_40_merged = pd.concat([top_40_nmr,top_40_others])
     top_40_merged.sort_values(by=["REF_AREA", "TIME_PERIOD", "INDICATOR"], inplace=True)
     
-    # Enumerate REF_AREA in all of teh dataframes
+    # Enumerate REF_AREA
     net_mg_rate = net_mg_rate.replace({"REF_AREA": REF_AREA_dict}).copy()
     top_40_nmr = top_40_nmr.replace({"REF_AREA": REF_AREA_dict}).copy()
     top_40_merged = top_40_merged.replace({"REF_AREA": REF_AREA_dict}).copy()
     top_40_others = top_40_others.replace({"REF_AREA": REF_AREA_dict}).copy()
+
+    top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
+    nmr_df = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].copy()
+    ind_df = top_40_merged[top_40_merged.INDICATOR==this_indicator].copy()
+
+    merged_df = nmr_df.merge(ind_df, on=["REF_AREA", "TIME_PERIOD"], how='inner').copy()
+    merged_df.rename(columns={"REF_AREA": "Country", "OBS_VALUE_x": "Net Migration Rate", "OBS_VALUE_y": this_indicator}, inplace=True)
 
     show_tables = "no"
     show_tables = st.checkbox("Show Dataframes")
@@ -220,49 +202,9 @@ def app():
             st.write("**Top-10 NMR All Indicators (2012 - 2022)**")
             st.write(top_40_others)
 
+        st.write("**Merged Tables**")
+        st.dataframe(merged_df)
 
-    top_40_nmr_sorted = top_40_merged.sort_values(by=["REF_AREA", "OBS_VALUE"]).copy()
-
-    # top_40_nmr_sorted.rename(columns={"REF_AREA":"Country"}, inplace=True)
-    # top_40_merged.rename(columns={"REF_AREA":"Country"}, inplace=True)
-
-    # "Net migration rate (per 1,000 population)" | "DM_NET_MG_RATE"
-    # nice_plot1 = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].hvplot.line( y="OBS_VALUE", x="REF_AREA", legend=False, rot=45, width=1000, height=500)
-    # nice_plot2 = top_40_merged[top_40_merged.INDICATOR==this_indicator].hvplot.scatter(y="OBS_VALUE", x="REF_AREA", by="TIME_PERIOD", rot=45, width=1000, height=500, yformatter=num_formatter, ylabel="Observation Value", xlabel="Top-N Countries", title=this_indicator )
-    # st.write("### Top NMR Countries Indicator Comparison")
-
-    # nice_plot1 = top_40_nmr_sorted.hvplot()
-
-    # st.write(hv.render(nice_plot1, backend='bokeh'))
-
-    # nmr_df = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].copy()
-
-
-    nmr_df = top_40_nmr_sorted[top_40_nmr_sorted.INDICATOR=="Net migration rate (per 1,000 population)"].copy()
-    ind_df = top_40_merged[top_40_merged.INDICATOR==this_indicator].copy()
-
-    merged_df = nmr_df.merge(ind_df, on=["REF_AREA", "TIME_PERIOD"], how='left')
-    merged_df.rename(columns={"REF_AREA": "Country", "OBS_VALUE_x": "Net Migration Rate", "OBS_VALUE_y": this_indicator}, inplace=True)
-
-    # NMR_data = nmr_df[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
-    # IND_data = ind_df[['REF_AREA', 'OBS_VALUE']].sort_values('OBS_VALUE').copy()
-    # st.dataframe(merged_df)
-
-    st.line_chart(merged_df, y=['Net Migration Rate', this_indicator], x='Country')
-
-    # x = chart_data['REF_AREA'].values.tolist()
-    # y = chart_data['OBS_VALUE'].values.tolist()
-    # st.write(x)
-    # st.write(y)
-
-    # x = [1, 2, 3, 4, 5]
-    # y = [6, 7, 2, 4, 5]
-    # p = figure(
-    #     title='test',
-    #     x_axis_label='x',
-    #     y_axis_label='y',
-    #     height=300)
-    # p.line(x, y, legend_label='NMR', line_width=2)
-    # st.bokeh_chart(p, use_container_width=True)
+    st.line_chart(merged_df, y=['Net Migration Rate', this_indicator], x='Country', height=500)
 
 app()
