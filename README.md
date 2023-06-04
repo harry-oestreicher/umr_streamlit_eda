@@ -2,11 +2,11 @@
 
 ## Exploratory Data Analysis
 
-## Overview 
-
 This MVP is an exploratory data analysis tool to examine the risk factors related to underage migrant youths.
 
 [live demo @ umresearch-eda.streamlit.app](https://umresearch-eda.streamlit.app/)
+
+[![](/src/images/streamlit-umr-eda-screenshot1.png)](https://umresearch-eda.streamlit.app/)
 
 ## Getting Started & Running the Code
 
