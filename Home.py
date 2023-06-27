@@ -25,8 +25,8 @@ def main():
 
     # Page Header information
     st.title("Unaccompanied Minor Research", anchor=None)
-    st.write("###Exploratory Data Analysis")
-    st.write("""Hi. This vizualization tool allows you to explore associated risk factors with Net Migraion Rate of unaccompanied minors.""")
+    st.write("### Exploratory Data Analysis")
+    st.write("""Welcome. This vizualization tool allows you to explore associated risk factors with Net Migraion Rate of unaccompanied minors.""")
     st.markdown("---")
     return
 
