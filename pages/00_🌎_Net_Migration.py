@@ -144,28 +144,15 @@ def join_indicator(gdf, df, indicator):
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "MG_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
-        # new_gdf["OBS_VALUE"] = new_gdf["OBS_VALUE"].values+100
         new_gdf["OBS_VALUE"] = new_gdf["OBS_VALUE"].astype(float)
     elif indicator == "MNCH_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "PT_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
-    # elif indicator == "PV_":
-    #     new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
     elif indicator == "WS_":
         new_gdf = gdf.merge(df, left_on=["id"], right_on=["REF_AREA"], how="outer")
-        # new_gdf.rename(columns={'OBS_VALUE': f"{this_indicator}"}, inplace=True)
         new_gdf = new_gdf[~new_gdf["id"].isna()]
-        # new_gdf = new_gdf.drop(columns=["REF_AREA", "INDICATOR"])
-
     new_gdf = new_gdf[~new_gdf["geometry"].isna()]
-    
-    # # # Create centroids projection on flat projection, then back
-    # gdf2["country_centroids"] = gdf2.to_crs("+proj=cea").centroid.to_crs(gdf2.crs)
-    # gdf2.drop(columns=["geometry"], inplace=True)
-    # gdf2["long"] = gdf2.country_centroids.map(lambda p: p.x)
-    # gdf2["lat"] = gdf2.country_centroids.map(lambda p: p.y)
-    
     return new_gdf
 
 
@@ -201,7 +188,6 @@ def get_indicators(df):
     return indicator_list
 
 def app():
-    # st.title("Unaccompanied Minor Research")
     st.write(
         """
         ### Exploratory Data Analysis
@@ -212,7 +198,7 @@ def app():
         """
     )
 
-    # Associate these group labels with thier file prefixes:
+    # Associate these group labels with file prefixes:
     indicator_group_dict = {
             "Demographic": "DM_",
             # "Economic": "ECON_",
@@ -256,10 +242,6 @@ def app():
     frequency = "annual"
     scale = "countries"
     selected_year = 2021
-
-    # with row1_col1:
-    #     st.write("**Year: 2021**")
-    #     selected_year = 2021 #st.selectbox("Year", years_list )
 
     row1_col1, row1_col2  = st.columns(
         [4, 6]
@@ -391,11 +373,6 @@ def app():
 
     geo_layer_1, min1, max1, colors1 = gen_colors(gdf, geo_colors_1)
     geo_layer_2, min2, max2, colors2 = gen_colors(gdf2, geo_colors_2)
-
-    # min_ind_value = gdf2[selected_col].min()
-    # max_ind_value = gdf2[selected_col].max()
-
-    # color_exp = f"[({selected_col}-{min_value})/({max_value}-{min_value})*255, 0, 0]"
     color_exp = f"[R, G, B]"
 
     initial_view_state = pdk.ViewState(
@@ -437,8 +414,6 @@ def app():
         filled=True,
         extruded=False,
         wireframe=True,
-        # get_elevation="properties.ALAND/100000",
-        # get_fill_color="color",
         get_fill_color=[0, 0, 0],
         get_line_color=[0, 0, 0],
         get_line_width=10,
@@ -474,30 +449,6 @@ def app():
         aggregation=String('SUM'),
         get_weight="OBS_VALUE > 0 ? OBS_VALUE : 0",
     )
-
-
-    # DATA_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
-
-
-    # labels_layer = pdk.Layer(
-    #     "LabeledGeoJsonLayer",
-    #     data=geo_layer_2,
-    #     filled=False,
-    #     billboard=False,
-    #     get_line_color=[180, 180, 180],
-    #     get_label="properties.name",
-    #     get_label_size=200000,
-    #     get_label_color=[0, 255, 255],
-    #     label_size_units=pdk.types.String("meters"),
-    #     line_width_min_pixels=1,
-    # )
-
-    # view_state = pydeck.ViewState(latitude=0, longitude=0, zoom=1)
-
-    # r = pydeck.Deck(custom_layer, initial_view_state=view_state, map_provider=None)
-
-    # tooltip = {"text": "Name: {NAME}"}
-    # tooltip_value = f"<b>Value:</b> {median_listing_price}""
 
     tooltip1 = {
         "html": "<strong>Country:</strong> {name}<br><strong>Indicator:</strong>{INDICATOR}<br/><strong>Value: </strong>{"
