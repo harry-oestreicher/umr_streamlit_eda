@@ -50,13 +50,13 @@ data_links = {
         "MG_": link_prefix + "umr_data_MG_.csv",
         "PV_": link_prefix + "umr_data_PV_.csv",
         "WS_": link_prefix + "umr_data_WS_.csv",
-        "WT_": link_prefix + "umr_data_WT.csv",
-        "ED_": link_prefix + "umr_data_ED.csv",
-        "GN_": link_prefix + "umr_data_GN.csv",
-        "HVA_": link_prefix + "umr_data_HVA.csv",
-        "IM_": link_prefix + "umr_data_IM.csv",
-        "MNCH_": link_prefix + "umr_data_MNCH.csv",
-        "PT_": link_prefix + "umr_data_PT.csv",
+        "WT_": link_prefix + "umr_data_WT_.csv",
+        "ED_": link_prefix + "umr_data_ED_.csv",
+        "GN_": link_prefix + "umr_data_GN_.csv",
+        "HVA_": link_prefix + "umr_data_HVA_.csv",
+        "IM_": link_prefix + "umr_data_IM_.csv",
+        "MNCH_": link_prefix + "umr_data_MNCH_.csv",
+        "PT_": link_prefix + "umr_data_PT_.csv",
     },
 }
 
@@ -106,9 +106,9 @@ def app():
             "Migratory": "MG_",
             "Water Services": "WS_",
             "Maternal, Newborn, and Child Health": "MNCH_",
-            "PT_": "PT_",
             "Youth Workforce": "WT_",
-            "ED_": "ED_",
+            "Education": "ED_",
+            "PT_": "PT_",
             "GN_": "GN_",
             "HVA_": "HVA_",
             "IM_": "IM_",
@@ -153,8 +153,20 @@ def app():
     st.write("#### Indicator Groups and Filters:")
     row1_col1, row1_col2, = st.columns([4, 4])
     with row1_col1:
-        indicator_group_selected = st.selectbox("**Indictator Group:**", ["Demographic", "Economic", "Migratory", "Maternal, Newborn, and Child Health",
-                                                                          "Water Services", "PT_", "Youth Workforce","ED_", "GN_", "HVA_", "IM_" ])
+        indicator_group_selected = st.selectbox("**Indictator Group:**", [
+            "Demographic", 
+            "Economic", 
+            "Migratory", 
+            "Maternal, Newborn, and Child Health",
+            "Water Services", 
+            "Youth Workforce",
+            "Education", 
+            "PT_",
+            "GN_", 
+            "HVA_", 
+            "IM_"
+            ]
+        )
         indicator_group = indicator_group_dict[indicator_group_selected]      
   
     indicator_df = get_indicator_data(data_links["indicator"][indicator_group])
