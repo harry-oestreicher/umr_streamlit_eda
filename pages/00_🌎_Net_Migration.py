@@ -49,7 +49,7 @@ with st.sidebar:
     ('No', 'Yes'))
 
 if fetch_from_cloud == 'Yes':
-    link_prefix = "https://raw.githubusercontent.com/harry-oestreicher/umr_eda/main/data/streamlit/"
+    link_prefix = "data/"
 else:
     link_prefix = "data/"
 
