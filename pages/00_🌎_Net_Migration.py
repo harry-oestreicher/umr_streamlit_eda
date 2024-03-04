@@ -43,15 +43,15 @@ Use the filter dropdowns to alter your results.
 Use the checkbox to preview data before map rendering.
 
 """)
-with st.sidebar:
-    fetch_from_cloud = st.radio(
-    "Fetch data from github?",
-    ('No', 'Yes'))
+# with st.sidebar:
+#     fetch_from_cloud = st.radio(
+#     "Fetch data from github?",
+#     ('No', 'Yes'))
 
-if fetch_from_cloud == 'Yes':
-    link_prefix = "data/"
-else:
-    link_prefix = "data/"
+# if fetch_from_cloud == 'Yes':
+#     link_prefix = "data/"
+# else:
+link_prefix = "data/"
 
 data_links = {
     "reference": {
